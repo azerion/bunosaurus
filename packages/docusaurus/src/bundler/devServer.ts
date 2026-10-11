@@ -27,7 +27,14 @@ const WebSocketPath = '/__docusaurus/dev-server';
 
 // Applies the updates sent by the dev server after rebuilding the app:
 // hot updates of route modules and CSS, or page reloads
-const DevClientScript = `(() => {
+const createDevClientScript = ({hotOnly}: {hotOnly: boolean}) => `(() => {
+  const reload = (reason) => {
+    if (${JSON.stringify(hotOnly)}) {
+      console.warn('[Docusaurus] The page must be reloaded to apply changes (--hot-only): ' + reason);
+      return;
+    }
+    location.reload();
+  };
   const updateCss = (href) => {
     const links = [...document.querySelectorAll('link[data-docusaurus-dev-css]')];
     const link = document.createElement('link');
@@ -41,7 +48,7 @@ const DevClientScript = `(() => {
   const applyUpdate = async (message) => {
     const hot = window.__DOCUSAURUS_HOT__;
     if (!hot) {
-      location.reload();
+      reload('hot updates are not available');
       return;
     }
     try {
@@ -51,8 +58,8 @@ const DevClientScript = `(() => {
       }
       console.info('[Docusaurus] Hot update applied');
     } catch (error) {
-      console.error('[Docusaurus] Hot update failed, reloading', error);
-      location.reload();
+      console.error('[Docusaurus] Hot update failed', error);
+      reload('hot update failed');
     }
   };
   const connect = () => {
@@ -63,7 +70,7 @@ const DevClientScript = `(() => {
     ws.onmessage = (event) => {
       const message = JSON.parse(event.data);
       if (message.type === 'reload') {
-        location.reload();
+        reload(message.reason);
       } else if (message.type === 'hot') {
         void applyUpdate(message);
       } else if (message.type === 'error') {
@@ -80,9 +87,11 @@ type DevAssets = {scripts: string[]; stylesheets: string[]};
 function renderDevHtml({
   props,
   assets,
+  hotOnly,
 }: {
   props: Props;
   assets: DevAssets;
+  hotOnly: boolean;
 }): string {
   const {siteConfig, headTags, preBodyTags, postBodyTags} = props;
   const lang = getLocaleConfig(props.i18n).htmlLang;
@@ -95,7 +104,7 @@ function renderDevHtml({
     ${headTags}
     ${assets.stylesheets.map((href) => `<link href="${escapeHTML(href)}" rel="stylesheet" data-docusaurus-dev-css="true">`).join('')}
     ${assets.scripts.map((src) => `<script type="module" src="${escapeHTML(src)}"></script>`).join('')}
-    <script>${DevClientScript}</script>
+    <script>${createDevClientScript({hotOnly})}</script>
   </head>
   <body>
     ${preBodyTags}
@@ -156,11 +165,14 @@ export async function createBunDevServer({
   port,
   poll,
   tls,
+  hotOnly = false,
 }: {
   getProps: () => Props;
   host: string;
   port: number;
   poll?: boolean | number;
+  /** Don't reload the page when a change can't be hot-updated */
+  hotOnly?: boolean;
   tls?: {cert: Buffer; key: Buffer};
 }): Promise<BunDevServer> {
   const initialProps = getProps();
@@ -256,9 +268,13 @@ export async function createBunDevServer({
       snapshot = nextSnapshot;
       if (update.type === 'reload') {
         if (!isFirstBuild) {
-          logger.info`Reloading the browser page: ${update.reason}`;
+          if (hotOnly) {
+            logger.warn`Reload the browser page to apply changes (${update.reason}), not reloaded automatically because of the code=${'--hot-only'} option`;
+          } else {
+            logger.info`Reloading the browser page: ${update.reason}`;
+          }
         }
-        return {type: 'reload'};
+        return {type: 'reload', reason: update.reason};
       }
       if (update.type === 'none') {
         return {type: 'none'};
@@ -433,7 +449,7 @@ export async function createBunDevServer({
             return new Response('Not found', {status: 404});
           }
           // Client-side routing: every other path renders the app
-          return new Response(renderDevHtml({props, assets}), {
+          return new Response(renderDevHtml({props, assets, hotOnly}), {
             headers: {'content-type': 'text/html; charset=utf-8'},
           });
         },

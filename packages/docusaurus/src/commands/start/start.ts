@@ -62,6 +62,7 @@ async function doStart(
     host: reloadableSite.openUrlContext.host,
     port: reloadableSite.openUrlContext.port,
     poll: cliOptions.poll,
+    hotOnly: cliOptions.hotOnly,
     tls: typeof httpsConfig === 'object' ? httpsConfig : undefined,
   });
 

@@ -65,7 +65,7 @@ export async function build(
     await Promise.all(finishing);
   });
 
-  logger.info`Use code=${'npm run serve'} command to test your build locally.`;
+  logger.info`Use code=${'bun run serve'} command to test your build locally.`;
 }
 
 // We need the default locale to always be the 1st in the list. If we build it

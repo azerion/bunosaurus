@@ -7,14 +7,14 @@
 
 // Only used in the rare, rare case of running globally installed create +
 // using --skip-install. We need a default name to show the tip text
-export const DefaultPackageManager = 'npm';
+export const DefaultPackageManager = 'bun';
 
 // Order matters
 export const LockfileNames = {
+  bun: 'bun.lock',
   npm: 'package-lock.json',
   yarn: 'yarn.lock',
   pnpm: 'pnpm-lock.yaml',
-  bun: 'bun.lockb',
 };
 
 export type PackageManager = keyof typeof LockfileNames;

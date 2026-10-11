@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import {describe, expect, it} from 'vitest';
+import {describe, expect, it, onTestFinished, vi} from 'vitest';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
@@ -524,6 +524,11 @@ describe('submodules APIs', () => {
 
     it('rejects for cwd of untracked dir', async () => {
       const cwd = await os.homedir();
+      // Git error messages differ when the home dir is a separate mount point
+      vi.stubEnv('GIT_DISCOVERY_ACROSS_FILESYSTEM', '1');
+      onTestFinished(() => {
+        vi.unstubAllEnvs();
+      });
       // Do we really want this to throw?
       // Not sure, and Git doesn't help us failsafe and return null...
       await expect(getGitSuperProjectRoot(cwd)).rejects

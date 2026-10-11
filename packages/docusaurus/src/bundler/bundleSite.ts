@@ -29,6 +29,9 @@ export const ClientEntryPath = path.join(clientDir, 'clientEntry.js');
 const ServerEntryPath = path.join(clientDir, 'serverEntry.js');
 
 const JSNaming = 'assets/js/[name].[hash].[ext]';
+// Bun names shared chunks after the entry point: a fixed entry name keeps the
+// entry files (main.<hash>.js/css) distinguishable from shared chunks
+const JSEntryNaming = 'assets/js/main.[hash].[ext]';
 
 async function getStaticDirectories(props: Props): Promise<string[]> {
   const {siteDir, siteConfig} = props;
@@ -192,7 +195,7 @@ export async function createBundlerSetup({
       sourcemap: isProd ? 'none' : 'linked',
       publicPath,
       naming: {
-        entry: JSNaming,
+        entry: JSEntryNaming,
         chunk: JSNaming,
         asset: 'assets/files/[name]-[hash].[ext]',
       },

@@ -98,16 +98,8 @@ function getNextVersionName() {
 
 // Artificial way to crash the SSR rendering and test errors
 // See website/_dogfooding/_pages tests/crashTest.tsx
-// Test with: DOCUSAURUS_CRASH_TEST=true pnpm build:website:fast
+// Test with: DOCUSAURUS_CRASH_TEST=true bun run build:website:fast
 const crashTest = process.env.DOCUSAURUS_CRASH_TEST === 'true';
-
-// By default, we use Docusaurus Faster
-// DOCUSAURUS_SLOWER=true is useful for benchmarking faster against slower
-// hyperfine --prepare 'pnpm clear:website' --runs 3 'DOCUSAURUS_SLOWER=true pnpm build:website:fast' 'pnpm build:website:fast'
-const isSlower = process.env.DOCUSAURUS_SLOWER === 'true';
-if (isSlower) {
-  console.log('🐢 Using slower Docusaurus build');
-}
 
 const router = process.env
   .DOCUSAURUS_ROUTER as DocusaurusConfig['future']['experimental_router'];
@@ -177,8 +169,6 @@ export default async function createConfigAsync() {
     baseUrlIssueBanner: true,
     url: 'https://docusaurus.io',
     vcs,
-    // Deprecated: dogfood the Webpack/Babel opt-out for benchmarking
-    webpack: isSlower,
     future: {
       experimental_router: router,
     },

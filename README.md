@@ -6,8 +6,6 @@ Bunosaurus is a fork of Docusaurus (4.0 development version) that runs on [Bun](
 bun create @azerion/bunosaurus my-website classic
 ```
 
-Existing sites alias their Docusaurus dependencies, for example `"@docusaurus/core": "npm:@azerion/bunosaurus-core@4.0.0"`.
-
 ## Performance
 
 [BlueStack developer docs](https://developers.bluestack.app): ~415 Markdown files, 9 docs plugin instances, 2 blogs, 2 locales, 1208 pages. Baseline: Docusaurus 3.10 with `future.faster` (Rspack, SWC, LightningCSS) on Node.js 24. Median of 4 interleaved runs on an AMD Ryzen AI 9 HX 370 laptop.
@@ -20,7 +18,30 @@ Existing sites alias their Docusaurus dependencies, for example `"@docusaurus/co
 | Dev server ready, warm cache |  | 2.1s |  |
 | Dev server, rebuild after editing a doc | 0.4s (HMR) | 0.6s (hot update) |  |
 
-See [BUNOSAURUS.md](./BUNOSAURUS.md) for the changes compared to Docusaurus, the breaking changes, the migration guide and the benchmark scripts.
+## Switching from Docusaurus
+
+1. [Install Bun](https://bun.sh/docs/installation) 1.4.1 or above.
+2. In your site `package.json`, point each `@docusaurus/*` dependency to its Bunosaurus package with an npm alias, so that your code and imports stay unchanged:
+
+   ```json
+   {
+     "dependencies": {
+       "@docusaurus/core": "npm:@azerion/bunosaurus-core@4.0.0",
+       "@docusaurus/preset-classic": "npm:@azerion/bunosaurus-preset-classic@4.0.0",
+       "react": "^19.3.0",
+       "react-dom": "^19.3.0"
+     }
+   }
+   ```
+
+   Remove `@docusaurus/faster` and `@rspack/core`, and upgrade React to 19.3.
+
+3. In `docusaurus.config`, remove `future.faster` and `future.v4`.
+4. Install and run with Bun: `bun install`, then `bun run start` or `bun run build`.
+
+Bunosaurus is based on the Docusaurus 4.0 development version: also check its [breaking changes](./BUNOSAURUS.md#breaking-changes).
+
+See [BUNOSAURUS.md](./BUNOSAURUS.md) for the changes compared to Docusaurus, the breaking changes, the full migration guide and the benchmark scripts.
 
 ---
 

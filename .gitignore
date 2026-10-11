@@ -56,3 +56,4 @@ website/profile.json.gz
 .claude
 .codex
 
+/bench-sites/

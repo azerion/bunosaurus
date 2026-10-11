@@ -56,6 +56,8 @@ const plugins = defineConfig([
 const ignores = globalIgnores([
   '.claude',
   '.codex',
+  // Local copies of benchmarked sites, see admin/bench
+  'bench-sites',
   '**/dist/**',
   '**/lib/**',
   // Not '**/build/**', it would ignore packages/docusaurus/src/commands/build

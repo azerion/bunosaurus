@@ -8,16 +8,16 @@ It is straightforward to test your Docusaurus changes with Docusaurus.
 
 ```bash
 cd /path/to/docusaurus-repo
-pnpm install
+bun install
 cd website
-pnpm start
+bun start
 ```
 
 ## Debugging Locally
 
 ### VS Code
 
-Use the following code in VS Code to enable breakpoints. Please ensure you have a later version of node for non-legacy debugging.
+Use the following code in VS Code to enable breakpoints. It requires the [Bun extension](https://marketplace.visualstudio.com/items?itemName=oven.bun-vscode).
 
 ```json
 {
@@ -25,10 +25,10 @@ Use the following code in VS Code to enable breakpoints. Please ensure you have 
   "configurations": [
     {
       "name": "Docusaurus Start (Debug)",
-      "type": "node",
+      "type": "bun",
       "request": "launch",
       "cwd": "${workspaceFolder}/website",
-      "program": "${workspaceFolder}/website/node_modules/@docusaurus/core/bin/docusaurus.js",
+      "program": "${workspaceFolder}/website/node_modules/@docusaurus/core/bin/docusaurus.mjs",
       "args": ["start"]
     }
   ]
@@ -41,4 +41,4 @@ Feel free to contribute debug instructions for other IDEs
 
 ### Observing changes
 
-Note that since most packages are built with TypeScript, you would need to compile them every time to see the effect. Alternatively, you can run `pnpm watch` inside the package directory to start an incremental build. Now that the server is running, you can make changes to the core Docusaurus code and docs to see the effects on the Docusaurus site. LiveReload will reflect changes to the local site in your browser, usually running at http://localhost:3000.
+Note that since most packages are built with TypeScript, you would need to compile them every time to see the effect. Alternatively, you can run `bun run watch` inside the package directory to start an incremental build. Now that the server is running, you can make changes to the core Docusaurus code and docs to see the effects on the Docusaurus site. LiveReload will reflect changes to the local site in your browser, usually running at http://localhost:3000.

@@ -22,6 +22,7 @@
   "ignorePaths": [
     ".claude",
     ".codex",
+    "bench-sites",
     "**/dist/**",
     "**/lib/**",
     "**/build/**",
@@ -33,8 +34,7 @@
     "packages/docusaurus-theme-translations/locales",
     "packages/docusaurus-plugin-ideal-image/src/theme/IdealImageLegacy",
     "package.json",
-    "pnpm-lock.yaml",
-    "pnpm-workspace.yaml",
+    "bun.lock",
     "yarn.lock",
     "project-words.txt",
     "__snapshots__",

@@ -16,7 +16,7 @@
   "scripts": {
     "build": "tsc --build",
     "watch": "tsc --build --watch",
-    "update": "node ./update.mjs"
+    "update": "bun ./update.mjs"
   },
   "dependencies": {
     "@docusaurus/fs": "workspace:*",

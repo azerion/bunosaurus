@@ -18,7 +18,7 @@
     "watch": "run-p -c copy:watch build:watch",
     "build:watch": "tsc --watch",
     "copy:watch": "copy-untyped-files --watch",
-    "removeThemeInternalReexport": "node removeThemeInternalReexport.mjs"
+    "removeThemeInternalReexport": "bun removeThemeInternalReexport.mjs"
   },
   "publishConfig": {
     "access": "public"

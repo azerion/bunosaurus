@@ -5,12 +5,14 @@
 # See also https://github.com/netlify/build/issues/2483
 
 [build]
-command = "pnpm --dir .. build:packages && pnpm build"
+command = "bun run --cwd .. build:packages && bun run build"
 publish = "website/build"
 
 [build.environment]
+# Netlify installs dependencies with Bun because of bun.lock
+BUN_VERSION = "1.4.1"
+# Only used by Netlify build plugins, the site builds with Bun
 NODE_VERSION = "24"
-NODE_OPTIONS = "--max_old_space_size=8192"
 
 
 # Note, we run build:packages and git backfill in parallel to speed up builds
@@ -21,13 +23,13 @@ NODE_OPTIONS = "--max_old_space_size=8192"
 # (bare "wait" always exits 0, which would swallow failures)
 
 [context.production]
-command = "(echo 'Git backfill start' && git backfill && echo 'Git backfill end') & (echo 'Build packages start' && pnpm --dir .. build:packages && echo 'Build packages end') && wait $! && pnpm netlify:build:production"
+command = "(echo 'Git backfill start' && git backfill && echo 'Git backfill end') & (echo 'Build packages start' && bun run --cwd .. build:packages && echo 'Build packages end') && wait $! && bun run netlify:build:production"
 
 [context.branch-deploy]
-command = "(echo 'Git backfill start' && git backfill && echo 'Git backfill end') & (echo 'Build packages start' && pnpm --dir .. build:packages && echo 'Build packages end') && wait $! && pnpm netlify:build:branchDeploy"
+command = "(echo 'Git backfill start' && git backfill && echo 'Git backfill end') & (echo 'Build packages start' && bun run --cwd .. build:packages && echo 'Build packages end') && wait $! && bun run netlify:build:branchDeploy"
 
 [context.deploy-preview]
-command = "(echo 'Git backfill start' && git backfill && echo 'Git backfill end') & (echo 'Build packages start' && pnpm --dir .. build:packages && echo 'Build packages end') && wait $! && pnpm netlify:build:deployPreview"
+command = "(echo 'Git backfill start' && git backfill && echo 'Git backfill end') & (echo 'Build packages start' && bun run --cwd .. build:packages && echo 'Build packages end') && wait $! && bun run netlify:build:deployPreview"
 
 [[plugins]]
 package = "netlify-plugin-cache"

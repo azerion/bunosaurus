@@ -15,8 +15,8 @@ updates:
           - 'github/codeql-action/*'
 
   ########################
-  # NPM VERSION UPDATES
-  - package-ecosystem: 'npm'
+  # BUN (NPM PACKAGES) VERSION UPDATES
+  - package-ecosystem: 'bun'
     directory: '/'
     exclude-paths:
       - 'examples/**'
@@ -29,7 +29,7 @@ updates:
     cooldown:
       default-days: 5
       semver-major-days: 30
-      # +1d compared to pnpm cutoff, otherwise Dependabot opens PRs too early
+      # +1d compared to the bunfig.toml minimumReleaseAge, otherwise Dependabot opens PRs too early
       # See https://github.com/facebook/docusaurus/pull/12241
       semver-minor-days: 8
       semver-patch-days: 8

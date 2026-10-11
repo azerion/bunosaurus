@@ -5,6 +5,7 @@
 __tests__/
 .claude
 .codex
+bench-sites
 build
 .docusaurus
 coverage

@@ -1,3 +1,5 @@
+> [!NOTE] **Bunosaurus**: this fork of Docusaurus runs on [Bun](https://bun.sh) only and bundles sites with `Bun.build()` instead of Webpack/Rspack. See [BUNOSAURUS.md](./BUNOSAURUS.md) for the changes, the migration guide and benchmarks.
+
 <div align="center">
   <h1 align="center">
     Docusaurus

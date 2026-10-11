@@ -26,6 +26,7 @@ Bhatt
 blockquotes
 Bokmål
 bunfig
+Bunosaurus
 bunx
 BYOLLM
 caabernathy
@@ -253,6 +254,7 @@ rspack
 Rspress
 rtcts
 runneradmin
+Ryzen
 Samply
 samply
 saurus

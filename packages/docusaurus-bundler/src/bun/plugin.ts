@@ -19,6 +19,17 @@ import type {LoaderCache} from './loaderCache';
 import type {BunPlugin, OnResolveArgs, OnResolveResult} from 'bun';
 import type {AcceptedPlugin} from 'postcss';
 
+// Extensions tried when resolving a request without extension
+const ResolveExtensions = [
+  '.tsx',
+  '.ts',
+  '.jsx',
+  '.js',
+  '.mjs',
+  '.cjs',
+  '.json',
+];
+
 const LoaderNamespace = 'docusaurus-loader';
 const AssetNamespace = 'docusaurus-asset';
 const TextNamespace = 'docusaurus-text';
@@ -182,6 +193,23 @@ export function createDocusaurusBunPlugin(
     try {
       return Bun.resolveSync(request, resolveDir);
     } catch {
+      // Bun's resolver caches directory entries per process, and may not see
+      // files created after a directory was first read: in a localized build,
+      // the generated files of a locale are created after the previous locale
+      // was bundled (observed on Windows)
+      if (path.isAbsolute(request)) {
+        for (const candidate of [
+          request,
+          ...ResolveExtensions.map((ext) => `${request}${ext}`),
+        ]) {
+          if (
+            (await pathExists(candidate)) &&
+            (await fs.stat(candidate)).isFile()
+          ) {
+            return candidate;
+          }
+        }
+      }
       // Absolute URLs in CSS are resolved against static dirs (resolve.roots)
       if (request.startsWith('/')) {
         for (const rootDir of options.rootDirs) {

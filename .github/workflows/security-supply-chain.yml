@@ -29,23 +29,21 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-      - name: Install pnpm
-        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
-      - name: Use Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          node-version: lts/*
-          check-latest: true
-          # No cache on purpose! We want SFW to fetch packages
-          package-manager-cache: false
+          bun-version-file: package.json
 
       # See https://socket.dev/blog/introducing-socket-firewall
+      # Bun isn't in the officially supported package managers list, but SFW
+      # works as a network proxy that Bun goes through
       - name: Install Socket Firewall Free
-        run: npm install -g sfw@2.0.6
+        run: bun add --global sfw@2.0.6
 
       # Ensure our monorepo gets scanned by SFW
       - name: Install monorepo dependencies with SFW
-        run: sfw pnpm install --frozen-lockfile || sfw pnpm install --frozen-lockfile || sfw pnpm install --frozen-lockfile
+        # No cache on purpose! We want SFW to fetch packages
+        run: sfw bun install --frozen-lockfile --no-cache --minimum-release-age=0
 
   # Check our init template deps for new supply chain compromissions
   # This workflow is not ideal but good enough for now
@@ -65,52 +63,30 @@ jobs:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
-
-      - name: Use Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          node-version: lts/*
-          check-latest: true
-          # No cache on purpose! We want SFW to fetch packages
-          package-manager-cache: false
+          bun-version-file: package.json
 
       # See https://socket.dev/blog/introducing-socket-firewall
+      # Bun isn't in the officially supported package managers list, but SFW
+      # works as a network proxy that Bun goes through
       - name: Install Socket Firewall Free
-        run: npm install -g sfw@2.0.6
+        run: bun add --global sfw@2.0.6
 
       # Generate the init template from a given npm dist tag
       - name: Generate published template
-        run: sfw pnpm create docusaurus@${{matrix.npm_dist_tag}} ../test-website classic --typescript --skip-install
-        env:
-          # We want to use the freshest "create-docusaurus" initializer
-          PNPM_CONFIG_MINIMUM_RELEASE_AGE: 0
+        # We want to use the freshest "create-docusaurus" initializer
+        run: sfw bunx create-docusaurus@${{matrix.npm_dist_tag}} ../test-website classic --typescript --skip-install
 
-      # Ensure no unexpected lifecycle (preintall/postinstall scripts)
-      # pnpm has options to fail a build on suspicious lifecycles
-      - name: Install test-website project with SFW and secure pnpm config
+      # Ensure no unexpected lifecycle (preinstall/postinstall scripts)
+      # Bun doesn't run the lifecycle scripts of dependencies, unless they are
+      # listed in trustedDependencies (or in Bun's default trusted list)
+      - name: Install test-website project with SFW
         working-directory: ../test-website
         run: |
-          cat > pnpm-workspace.yaml <<'YAML'
-
           # SFW should check the newest possible release + transitive deps
-          minimumReleaseAge: 0
-
-          blockExoticSubdeps: true
-          strictDepBuilds: true
-
-          allowBuilds:
-            '@swc/core': false
-            core-js: false
-
-          trustPolicy: no-downgrade
-          trustPolicyExclude:
-            - 'detect-port@1.6.1'
-            - 'semver@6.3.1'
-            - 'webpack-dev-middleware@7.4.6'
-            - 'undici-types@6.21.0'
-          YAML
-
-          sfw pnpm install || sfw pnpm install || sfw pnpm install
-          pnpm build
+          sfw bun install --no-cache --minimum-release-age=0
+          # Lists the dependency lifecycle scripts that Bun blocked
+          bun pm untrusted
+          bun run build

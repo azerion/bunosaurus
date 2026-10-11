@@ -10,7 +10,7 @@ set -xeuo pipefail
 rm -rf ../test-website
 
 CUSTOM_REGISTRY_URL="http://localhost:4873"
-NEW_VERSION="$(node -p "require('./packages/docusaurus/package.json').version")-NEW-$RANDOM"
+NEW_VERSION="$(bun -p "require('./packages/docusaurus/package.json').version")-NEW-$RANDOM"
 CONTAINER_NAME="verdaccio"
 EXTRA_OPTS=""
 
@@ -42,33 +42,28 @@ docker rm -f verdaccio
 docker run -d --rm --name "$CONTAINER_NAME" -p 4873:4873 -v "$PWD/admin/verdaccio.yaml":/verdaccio/conf/config.yaml verdaccio/verdaccio:latest
 
 # Build packages
-pnpm build:packages
+bun run build:packages
 
 # Publish the monorepo
-npx --no-install lerna publish \
-  --exact \
-  --yes \
-  --no-verify-access \
-  --no-git-reset \
-  --no-git-tag-version \
-  --no-push \
-  --include-private docusaurus-2-classic-template \
-  --include-private docusaurus-2-classic-typescript-template \
-  --registry "$CUSTOM_REGISTRY_URL" "$NEW_VERSION"
+bun admin/scripts/release.ts version "$NEW_VERSION"
+# Verdaccio accepts anonymous publishing, but "bun publish" requires a token
+NPM_CONFIG_TOKEN=verdaccio-anonymous \
+  bun admin/scripts/release.ts publish --tag e2e --registry "$CUSTOM_REGISTRY_URL"
 
 # Revert version changes
-git restore -- '**/package.json' lerna.json pnpm-lock.yaml
+git restore -- '**/package.json' bun.lock
 
 
-# The website is generated outside the repo to minimize chances of pnpm resolving the wrong version
+# The website is generated outside the repo, so that it doesn't use the monorepo workspace
 cd ..
 
 echo Generating test-website in `pwd`
 
 # Build skeleton website with new version
-pnpm_config_registry="$CUSTOM_REGISTRY_URL" \
-  pnpm_config_minimum_release_age_exclude='["create-docusaurus","@docusaurus/*","stylelint-copyright"]' \
-  pnpm --loglevel debug dlx create-docusaurus@"$NEW_VERSION" test-website classic --javascript $EXTRA_OPTS
+# A fresh cache dir avoids resolving versions from cached registry metadata
+BUN_CONFIG_REGISTRY="$CUSTOM_REGISTRY_URL" \
+  BUN_INSTALL_CACHE_DIR="$(mktemp -d)" \
+  bunx --bun create-docusaurus@"$NEW_VERSION" test-website classic --javascript $EXTRA_OPTS
 
 
 # Stop Docker container

@@ -7,14 +7,17 @@
 
 // Packs all the public monorepo packages as tarballs, to use them in a site
 // outside of this monorepo, and prints the package.json "overrides" to add.
+// When a site directory is given, the overrides are written to its
+// package.json instead.
 //
-// Usage: bun admin/scripts/packForSite.ts <destinationDir>
+// Usage: bun admin/scripts/packForSite.ts <destinationDir> [siteDir]
 // Run "bun run build:packages" first.
 
 import path from 'node:path';
 import {$} from 'bun';
 
 const destination = path.resolve(process.argv[2] ?? 'dist-packages');
+const siteDir = process.argv[3] ? path.resolve(process.argv[3]) : undefined;
 const rootDir = path.resolve(import.meta.dir, '../..');
 
 const overrides: {[name: string]: string} = {};
@@ -36,4 +39,16 @@ for await (const pkgJsonPath of glob.scan({cwd: rootDir})) {
   overrides[pkg.name] = `file:${path.join(destination, tarball)}`;
 }
 
-console.log(JSON.stringify({overrides}, null, 2));
+if (siteDir) {
+  const sitePkgPath = path.join(siteDir, 'package.json');
+  const sitePkg = (await Bun.file(sitePkgPath).json()) as {
+    overrides?: {[name: string]: string};
+  };
+  sitePkg.overrides = {...sitePkg.overrides, ...overrides};
+  await Bun.write(sitePkgPath, `${JSON.stringify(sitePkg, null, 2)}\n`);
+  console.log(
+    `Added ${Object.keys(overrides).length} overrides to ${sitePkgPath}`,
+  );
+} else {
+  console.log(JSON.stringify({overrides}, null, 2));
+}

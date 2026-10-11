@@ -42,8 +42,6 @@ const config: KnipConfig = {
     'openssl',
     // Not installed, expected to be run through npx
     'serve',
-    // TODO: upstream release workflows (publish.yml) not migrated to Bun yet
-    'lerna',
   ],
   workspaces: {
     '.': {
@@ -64,9 +62,6 @@ const config: KnipConfig = {
       ignoreBinaries: [
         // False positives, not binaries
         'create',
-        'typecheck',
-        // Installed in the argos workspace
-        'playwright',
       ],
     },
     argos: {
@@ -103,8 +98,6 @@ const config: KnipConfig = {
       ignoreDependencies: [
         // Resolved from the site dir, only when using a theme
         '@docusaurus/theme-common',
-        // JSDoc type, provided by webpack-dev-server
-        'express',
       ],
     },
     'packages/docusaurus-module-type-aliases': {
@@ -134,10 +127,6 @@ const config: KnipConfig = {
     },
     'packages/docusaurus-plugin-vercel-analytics': {
       entry: ['src/analytics.ts'],
-    },
-    'packages/docusaurus-preset-classic': {
-      // Resolved with require.resolve(name)
-      ignoreDependencies: ['@docusaurus/plugin-css-cascade-layers'],
     },
     'packages/docusaurus-theme-classic': themePackageConfig({
       entry: ['src/nprogress.ts', 'src/prism-include-languages.ts'],
@@ -192,7 +181,6 @@ const config: KnipConfig = {
         'netlify-plugin-cache',
         // Used by theme components ejected in CI, see testSwizzleThemeClassic.mjs
         '@docusaurus/utils-common',
-        '@mdx-js/react',
         '@types/prismjs',
         'copy-text-to-clipboard',
         'prismjs',
@@ -201,8 +189,6 @@ const config: KnipConfig = {
         'react-medium-image-zoom',
         // Used by versioned docs through !!raw-loader! imports
         'raw-loader',
-        // Peer dependency of raw-loader
-        'webpack',
       ],
     },
   },

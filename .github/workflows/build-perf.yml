@@ -13,7 +13,7 @@ on:
     paths:
       - .github/workflows/build-perf.yml
       - package.json
-      - pnpm-lock.yaml
+      - bun.lock
       - packages/**
       - website/**
       - '!website/docs/**'
@@ -36,37 +36,28 @@ jobs:
     name: Build Size Report
     timeout-minutes: 30
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        DOCUSAURUS_INFRA: ['SLOWER', 'FASTER']
     steps:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-      - name: Install pnpm
-        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
-      - name: Set up Node
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          node-version: lts/*
-          check-latest: true
-          cache: pnpm
+          bun-version-file: package.json
       - name: Track build size changes
         uses: preactjs/compressed-size-action@f322c295dde06a1cb7ccaef105732dd8a726d1d9 # v2.10.0
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           # Always rebuild packages, including for the base branch
-          install-script: bash -c "pnpm install --frozen-lockfile --ignore-scripts && pnpm build:packages"
+          install-script: bash -c "bun install --frozen-lockfile --ignore-scripts && bun run build:packages"
           build-script: build:website:fast
           clean-script: clear:website # see https://github.com/facebook/docusaurus/pull/6838
-          pattern: '{website/build/assets/js/main*js,website/build/assets/js/runtime~main*js,website/build/assets/css/styles*css,website/.docusaurus/globalData.json,website/.docusaurus/registry.js,website/.docusaurus/routes.js,website/.docusaurus/routesChunkNames.json,website/.docusaurus/site-metadata.json,website/.docusaurus/codeTranslations.json,website/.docusaurus/i18n.json,website/.docusaurus/docusaurus.config.mjs,website/build/index.html,website/build/docs.html,website/build/docs/**/*.html,website/build/blog.html,website/build/blog/**/*.html}'
+          pattern: '{website/build/assets/js/main*js,website/build/assets/js/main*css,website/.docusaurus/globalData.json,website/.docusaurus/registry.js,website/.docusaurus/routes.js,website/.docusaurus/routesChunkNames.json,website/.docusaurus/site-metadata.json,website/.docusaurus/codeTranslations.json,website/.docusaurus/i18n.json,website/.docusaurus/docusaurus.config.mjs,website/build/index.html,website/build/docs.html,website/build/docs/**/*.html,website/build/blog.html,website/build/blog/**/*.html}'
           # HTML files: exclude versioned docs pages, tags pages, html redirect files
           exclude: '{website/build/docs/?.?.?/**/*.html,website/build/docs/next/**/*.html,website/build/blog/tags/**/*.html,**/*.html.html}'
           strip-hash: '\.([^;]\w{7})\.'
           minimum-change-threshold: 30
           compression: none
-          comment-key: DOCUSAURUS_INFRA_${{ matrix.DOCUSAURUS_INFRA }}
         env:
-          DOCUSAURUS_SLOWER: ${{ matrix.DOCUSAURUS_INFRA == 'SLOWER' && 'true' || 'false'  }}
           DOCUSAURUS_PERF_LOGGER: 'true'
 
   # Ensures build times stay under reasonable thresholds
@@ -74,38 +65,28 @@ jobs:
     name: Build Time Perf
     timeout-minutes: 30
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        DOCUSAURUS_INFRA: ['SLOWER', 'FASTER']
     steps:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-      - name: Install pnpm
-        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
-      - name: Set up Node
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          node-version: lts/*
-          check-latest: true
-          cache: pnpm
+          bun-version-file: package.json
       - name: Installation
-        run: pnpm install --frozen-lockfile || pnpm install --frozen-lockfile || pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       # Ensure build with a cold cache does not increase too much
       - name: Build (cold cache)
-        run: pnpm build:website:fast
-        timeout-minutes: ${{ matrix.DOCUSAURUS_INFRA == 'SLOWER' && 3 || 2  }}
+        run: bun run build:website:fast
+        timeout-minutes: 2
         env:
-          DOCUSAURUS_SLOWER: ${{ matrix.DOCUSAURUS_INFRA == 'SLOWER' && 'true' || 'false'  }}
           DOCUSAURUS_PERF_LOGGER: 'true'
 
       # Ensure build with a warm cache does not increase too much
       - name: Build (warm cache)
-        run: pnpm build:website:fast
-        # Temporary: upper value for Rspack until incremental cache works better
-        timeout-minutes: ${{ matrix.DOCUSAURUS_INFRA == 'SLOWER' && 1 || 2  }}
+        run: bun run build:website:fast
+        timeout-minutes: 1
         env:
-          DOCUSAURUS_SLOWER: ${{ matrix.DOCUSAURUS_INFRA == 'SLOWER' && 'true' || 'false'  }}
           DOCUSAURUS_PERF_LOGGER: 'true'
 
     # TODO post a GitHub comment with build with perf warnings?

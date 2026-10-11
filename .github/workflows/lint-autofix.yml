@@ -24,36 +24,28 @@ jobs:
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           ref: ${{ github.head_ref }}
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
-
-      - name: Set up Node LTS
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          node-version: lts/*
-          check-latest: true
-          cache: pnpm
+          bun-version-file: package.json
 
       - name: Installation
-        run: pnpm install --frozen-lockfile || pnpm install --frozen-lockfile || pnpm install --frozen-lockfile
-
-      - name: AutoFix Duplicated deps
-        run: pnpm lint:deps:fix
+        run: bun install --frozen-lockfile
 
       - name: AutoFix Formatting
-        run: pnpm format
+        run: bun run format
 
       - name: AutoFix JS
-        run: pnpm lint:js:fix
+        run: bun run lint:js:fix
 
       - name: AutoFix Style
-        run: pnpm lint:style:fix
+        run: bun run lint:style:fix
 
       - name: AutoFix Spelling
-        run: pnpm lint:spelling:fix
+        run: bun run lint:spelling:fix
 
       - name: AutoFix Dependency versions
-        run: pnpm lint:syncpack:fix
+        run: bun run lint:syncpack:fix
 
       - name: Print Diff
         run: git diff

@@ -45,9 +45,13 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           fetch-depth: 0 # Needed to get the commit number with "git rev-list --count HEAD"
-      - name: Install pnpm
-        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
-      - name: Set up Node
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version-file: package.json
+      # Packages are packed with Bun, but published with the npm CLI: unlike
+      # "bun publish", it supports npm trusted publishing (OIDC)
+      - name: Set up Node (npm CLI)
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: lts/*
@@ -55,36 +59,34 @@ jobs:
           #  ⚠️ Do not use any cache on purpose
           # It increases the chance of a compromised release being publish
           # See https://github.com/actions/setup-node/issues/1445#issuecomment-4040130833
-          # cache: pnpm
           package-manager-cache: false
       - name: Prepare git
         run: |
           git config --global user.name "Docusaurus"
           git config --global user.email "github@docusaurus.io"
       - name: Installation
-        run: pnpm install --frozen-lockfile || pnpm install --frozen-lockfile || pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Publish Canary release
         if: |
           github.event_name == 'push' ||
           (github.event_name == 'workflow_dispatch' && github.event.inputs.npm_tag == 'canary')
         run: |
-          pnpm canary:bumpVersion
-          pnpm install --frozen-lockfile || pnpm install --frozen-lockfile || pnpm install --frozen-lockfile
-          pnpm canary:publish
+          bun admin/scripts/release.ts version "$(bun admin/scripts/release.ts canary-version)"
+          bun admin/scripts/release.ts publish --tag canary --client npm
 
       - name: Publish NPM release
         if: |
           github.event_name == 'workflow_dispatch' && github.event.inputs.npm_tag != 'canary'
+        env:
+          NPM_VERSION: ${{ github.event.inputs.npm_version }}
+          NPM_TAG: ${{ github.event.inputs.npm_tag }}
         run: |
-          pnpm lerna publish \
-            --force-publish \
-            --exact "${{ github.event.inputs.npm_version }}" \
-            --dist-tag "${{ github.event.inputs.npm_tag }}" \
-            --loglevel verbose \
-            --yes \
-            --no-push
-          git push origin v"${{ github.event.inputs.npm_version }}"
+          bun admin/scripts/release.ts version "$NPM_VERSION"
+          git commit --all --no-verify --message "v$NPM_VERSION"
+          git tag "v$NPM_VERSION"
+          bun admin/scripts/release.ts publish --tag "$NPM_TAG" --client npm
+          git push origin "v$NPM_VERSION"
 
         # TODO should we push the package version local updates to Git?
         #  "main" is currently protected, even GitHub Actions can't push to it

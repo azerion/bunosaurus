@@ -1,7 +1,7 @@
 {
   "ci": {
     "collect": {
-      "startServerCommand": "pnpm serve:website",
+      "startServerCommand": "bun run serve:website",
       "startServerReadyPattern": "Serving",
       "startServerReadyTimeout": 10000,
 

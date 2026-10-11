@@ -62,7 +62,7 @@ describe('packages', () => {
   If a package starts with @, if won't be published to public npm registry
   without an additional publishConfig.access: "public" config
   This will make you publish an incomplete list of Docusaurus packages
-  when trying to release with lerna-publish
+  when trying to release with admin/scripts/release.ts
    */
   it('have publishConfig.access: "public" when name starts with @', async () => {
     const packageJsonFiles = await getPackagesJsonFiles();

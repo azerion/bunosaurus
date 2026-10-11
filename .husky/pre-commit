@@ -1,2 +1,2 @@
 # Run lint-staged and the linters it spawns on the Bun runtime
-bun run --bun lint-staged
+bunx --bun lint-staged

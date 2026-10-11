@@ -62,6 +62,31 @@ describe('toPublishedPackageJson', () => {
     });
   });
 
+  it('points to the Bunosaurus repository', () => {
+    expect(
+      toPublishedPackageJson(
+        {
+          name: '@docusaurus/utils',
+          version: '1.0.0',
+          repository: {
+            type: 'git',
+            url: 'https://github.com/facebook/docusaurus.git',
+            directory: 'packages/docusaurus-utils',
+          },
+          bugs: {url: 'https://github.com/facebook/docusaurus/issues'},
+        },
+        publishedNames,
+      ),
+    ).toMatchObject({
+      repository: {
+        type: 'git',
+        url: 'https://github.com/azerion/bunosaurus.git',
+        directory: 'packages/docusaurus-utils',
+      },
+      bugs: {url: 'https://github.com/azerion/bunosaurus/issues'},
+    });
+  });
+
   it('keeps the name of unpublished packages (templates)', () => {
     expect(
       toPublishedPackageJson(

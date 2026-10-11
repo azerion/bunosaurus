@@ -15,10 +15,13 @@ export type PackageJson = {
   devDependencies?: {[name: string]: string};
   peerDependencies?: {[name: string]: string};
   optionalDependencies?: {[name: string]: string};
+  repository?: {type: string; url: string; directory?: string};
+  bugs?: {url: string};
 };
 
 const PublishScope = '@azerion';
 const PublishPrefix = 'bunosaurus';
+const PublishRepository = 'https://github.com/azerion/bunosaurus';
 
 // Repo-internal linting tools, unchanged from upstream: not published
 export const UnpublishedPackages = new Set([
@@ -52,6 +55,13 @@ export function toPublishedPackageJson(
   const result: PackageJson = {...pkg};
   if (publishedNames.has(pkg.name)) {
     result.name = getPublishedName(pkg.name);
+    // The published packages come from the Bunosaurus repo
+    if (pkg.repository) {
+      result.repository = {...pkg.repository, url: `${PublishRepository}.git`};
+    }
+    if (pkg.bugs) {
+      result.bugs = {url: `${PublishRepository}/issues`};
+    }
   }
   (
     [

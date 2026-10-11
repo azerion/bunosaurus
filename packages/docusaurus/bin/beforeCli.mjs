@@ -97,12 +97,19 @@ export default async function beforeCli() {
       return;
     }
 
+    // Packages can be published under other names (e.g. Bunosaurus packages,
+    // "@azerion/bunosaurus-core"), and installed with npm aliases
+    const publishedPrefix = name.replace(/core$/, '');
     const siteDocusaurusPackagesForUpdate = Object.keys({
       ...sitePkg.dependencies,
       ...sitePkg.devDependencies,
     })
-      .filter((p) => p.startsWith('@docusaurus'))
-      .map((p) => p.concat('@latest'))
+      .filter((p) => p.startsWith('@docusaurus/'))
+      .map((p) =>
+        publishedPrefix === '@docusaurus/'
+          ? `${p}@latest`
+          : `${p}@npm:${publishedPrefix}${p.slice('@docusaurus/'.length)}@latest`,
+      )
       .join(' ');
 
     const getUpgradeCommand = async () =>

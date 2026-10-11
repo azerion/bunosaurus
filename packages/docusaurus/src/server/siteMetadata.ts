@@ -6,7 +6,10 @@
  */
 
 import path from 'node:path';
-import {DOCUSAURUS_VERSION} from '@docusaurus/utils';
+import {
+  DOCUSAURUS_VERSION,
+  normalizeDocusaurusPackageName,
+} from '@docusaurus/utils';
 import {fs, pathExists, readJSON} from '@docusaurus/fs';
 import type {
   LoadedPlugin,
@@ -62,7 +65,9 @@ export async function loadPluginVersion(
       const packageJson = await tryLoadPackageJson(packageJsonPath);
       return {
         type: 'package',
-        name: packageJson?.name,
+        name: packageJson?.name
+          ? normalizeDocusaurusPackageName(packageJson.name)
+          : undefined,
         version: packageJson?.version,
       };
     }

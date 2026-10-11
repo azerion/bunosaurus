@@ -38,28 +38,40 @@ The bundler lives in `packages/docusaurus-bundler/src/bun` (generic parts) and `
 - The SSG output uses ES modules: a custom `ssrTemplate` must render `it.scripts` with `<script type="module">`, and can render `it.modulePreloads` as `<link rel="modulepreload">`.
 - The generated route registry no longer contains Webpack chunk names (`require.resolveWeak`).
 
+## Published packages
+
+The packages are published under the `@azerion` scope with a `bunosaurus-` prefix (`admin/scripts/publishedPackages.ts`): `@docusaurus/core` is published as `@azerion/bunosaurus-core`, `@docusaurus/plugin-content-docs` as `@azerion/bunosaurus-plugin-content-docs`, and `create-docusaurus` as `@azerion/create-bunosaurus`. All the public packages of `packages/` are published, except the repo linting tools (`@docusaurus/eslint-plugin`, `stylelint-copyright`).
+
+Sites still install them under their `@docusaurus/*` names, with npm aliases: Docusaurus resolves its packages by these names (presets, plugin shorthands, swizzle, theme imports, swizzled components), so Bunosaurus is a drop-in replacement. The published packages depend on each other the same way (`"@docusaurus/utils": "npm:@azerion/bunosaurus-utils@<version>"`).
+
+Release: `bun admin/scripts/release.ts version <version>`, then `bun admin/scripts/release.ts publish --tag <tag>` (`pack <dir>` creates the renamed tarballs without publishing).
+
+## Creating a new site
+
+```bash
+bun create @azerion/bunosaurus my-website classic
+```
+
 ## Using Bunosaurus in an existing Docusaurus site
 
-1. Build and pack the packages:
-
-   ```bash
-   bun install
-   bun admin/scripts/packForSite.ts /path/to/dist-packages
-   ```
-
-   The script prints an `overrides` object: add it to the site `package.json` so that all `@docusaurus/*` packages resolve to the packed tarballs (or publish the packages to a private registry).
-
-2. In the site `package.json`:
-   - set the `@docusaurus/*` dependencies to the Bunosaurus version (`4.0.0`);
+1. In the site `package.json`:
+   - replace the `@docusaurus/*` dependencies with aliases to the Bunosaurus packages, for example `"@docusaurus/core": "npm:@azerion/bunosaurus-core@<version>"`, `"@docusaurus/preset-classic": "npm:@azerion/bunosaurus-preset-classic@<version>"`;
    - remove `@docusaurus/faster` and `@rspack/core`;
    - upgrade `react` and `react-dom` to `^19.3.0`;
    - set `"engines": {"bun": ">=1.4.1"}`.
 
-3. In `docusaurus.config`, remove `future.faster` / `future.v4`.
+2. In `docusaurus.config`, remove `future.faster` / `future.v4`.
 
-4. Install and build with Bun: `bun install`, `bun run build`, `bun run start`.
+3. Install and build with Bun: `bun install`, `bun run build`, `bun run start`.
 
 When the site is a workspace of a monorepo using Bun's isolated linker, swizzled components must declare the packages they import (for example `@docusaurus/theme-common`) as dependencies.
+
+To test unpublished changes, pack the packages of this repo and point a site to the tarballs with `overrides`:
+
+```bash
+bun install
+bun admin/scripts/packForSite.ts /path/to/dist-packages /path/to/site
+```
 
 ## Benchmarks
 

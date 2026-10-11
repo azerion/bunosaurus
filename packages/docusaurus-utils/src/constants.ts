@@ -21,6 +21,27 @@ export const DOCUSAURUS_VERSION =
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   (require('../package.json') as {version: string}).version;
 
+// Packages can be published under other names, e.g. Bunosaurus publishes
+// "@docusaurus/utils" as "@azerion/bunosaurus-utils", and sites install them
+// under their "@docusaurus/*" names with npm aliases
+const PublishedPackagePrefix =
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  (require('../package.json') as {name: string}).name.replace(/utils$/, '');
+
+/**
+ * Returns the "@docusaurus/*" name of a Docusaurus package published under
+ * another name, other package names are returned unchanged.
+ */
+export function normalizeDocusaurusPackageName(name: string): string {
+  if (
+    PublishedPackagePrefix !== '@docusaurus/' &&
+    name.startsWith(PublishedPackagePrefix)
+  ) {
+    return `@docusaurus/${name.slice(PublishedPackagePrefix.length)}`;
+  }
+  return name;
+}
+
 /**
  * Can be overridden with cli option `--out-dir`. Code should generally use
  * `context.outDir` instead (which is always absolute and localized).

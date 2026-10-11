@@ -33,6 +33,10 @@ packages:
   '@docusaurus/*':
     access: $all
     publish: $all
+  # Bunosaurus packages, published with admin/scripts/release.ts
+  '@azerion/*':
+    access: $all
+    publish: $all
   '@*/*':
     access: $all
     publish: $authenticated

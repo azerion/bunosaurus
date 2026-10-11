@@ -63,7 +63,7 @@ echo Generating test-website in `pwd`
 # A fresh cache dir avoids resolving versions from cached registry metadata
 BUN_CONFIG_REGISTRY="$CUSTOM_REGISTRY_URL" \
   BUN_INSTALL_CACHE_DIR="$(mktemp -d)" \
-  bunx --bun create-docusaurus@"$NEW_VERSION" test-website classic --javascript $EXTRA_OPTS
+  bunx --bun @azerion/create-bunosaurus@"$NEW_VERSION" test-website classic --javascript $EXTRA_OPTS
 
 
 # Stop Docker container

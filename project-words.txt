@@ -19,6 +19,7 @@ atrule
 autogenerating
 autohide
 Autolinks
+azerion
 backgrounded
 Bartosz
 beforeinstallprompt

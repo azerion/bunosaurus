@@ -22,6 +22,7 @@ export {
   DEFAULT_PORT,
   DEFAULT_PLUGIN_ID,
   WEBPACK_URL_LOADER_LIMIT,
+  normalizeDocusaurusPackageName,
 } from './constants';
 export {generate, readOutputHTMLFile} from './emitUtils';
 export {

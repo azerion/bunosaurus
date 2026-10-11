@@ -202,7 +202,7 @@ export function createDocusaurusBunPlugin(
     // CSS files reference assets by URL: emit and externalize them
     if (CSSRegExp.test(importer)) {
       const asset = await assetEmitter.getAsset(filePath);
-      return {path: asset.url, external: true};
+      return {path: asset.cssUrl, external: true};
     }
     return {path: filePath, namespace: AssetNamespace};
   }

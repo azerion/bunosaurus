@@ -193,7 +193,10 @@ export async function createBundlerSetup({
       splitting: true,
       minify: minify && isProd,
       sourcemap: isProd ? 'none' : 'linked',
-      publicPath,
+      // Without publicPath, chunks import each other with relative URLs,
+      // which is what the hash router needs (URLs relative to the document
+      // would be resolved against the importing chunk URL)
+      publicPath: router === 'hash' ? undefined : publicPath,
       naming: {
         entry: JSEntryNaming,
         chunk: JSNaming,

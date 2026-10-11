@@ -30,7 +30,18 @@ export function isAssetPath(filePath: string): boolean {
   return getAssetFolder(filePath) !== undefined;
 }
 
-type EmittedAsset = {source: string; outputPath: string; url: string};
+type EmittedAsset = {
+  source: string;
+  outputPath: string;
+  url: string;
+  /** URL to use in the CSS bundle, emitted in the assets/js folder */
+  cssUrl: string;
+};
+
+// "./" (hash router): URLs are relative to the HTML document
+function isRelativePublicPath(publicPath: string): boolean {
+  return !publicPath.startsWith('/') && !/^[a-z][a-z\d+.-]*:/i.test(publicPath);
+}
 
 /**
  * Computes stable, content-hashed URLs for imported assets
@@ -77,6 +88,10 @@ export class AssetEmitter {
       source,
       outputPath: path.join(this.options.outDir, relativePath),
       url: `${this.options.publicPath}${relativePath}`,
+      // Relative URLs in CSS are resolved against the CSS file URL
+      cssUrl: isRelativePublicPath(this.options.publicPath)
+        ? `../../${relativePath}`
+        : `${this.options.publicPath}${relativePath}`,
     };
   }
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 /**
  * Copyright (c) Facebook, Inc. and its affiliates.
  *
@@ -32,7 +32,7 @@ function handleError(error) {
   logger.error(inspect(error, {depth: Infinity}));
 
   logger.info`Docusaurus version: number=${DOCUSAURUS_VERSION}
-Node version: number=${process.version}`;
+Bun version: number=${Bun.version}`;
   process.exit(1);
 }
 

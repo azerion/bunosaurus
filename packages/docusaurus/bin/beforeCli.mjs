@@ -9,13 +9,11 @@
 
 import path from 'node:path';
 import {createRequire} from 'node:module';
-import {execa} from 'execa';
 import {logger} from '@docusaurus/logger';
 import semver from 'semver';
 import updateNotifier from 'update-notifier';
 import boxen from 'boxen';
 import {DOCUSAURUS_VERSION} from '@docusaurus/utils';
-import {pathExists} from '@docusaurus/fs';
 
 const packageJson = /** @type {typeof import("../package.json")} */ (
   createRequire(import.meta.url)('../package.json')
@@ -32,7 +30,7 @@ try {
 
 const {
   name,
-  engines: {node: requiredVersion},
+  engines: {bun: requiredVersion},
 } = packageJson;
 
 /**
@@ -107,32 +105,8 @@ export default async function beforeCli() {
       .map((p) => p.concat('@latest'))
       .join(' ');
 
-    const getYarnVersion = async () => {
-      if (!(await pathExists(path.resolve('yarn.lock')))) {
-        return undefined;
-      }
-
-      const yarnVersionResult = await execa`yarn --version`;
-      const majorVersion = parseInt(
-        yarnVersionResult.stdout?.trim().split('.')[0] ?? '',
-        10,
-      );
-      if (!Number.isNaN(majorVersion)) {
-        return majorVersion;
-      }
-
-      return undefined;
-    };
-
-    const getUpgradeCommand = async () => {
-      const yarnVersion = await getYarnVersion();
-      if (!yarnVersion) {
-        return `npm i ${siteDocusaurusPackagesForUpdate}`;
-      }
-      return yarnVersion >= 2
-        ? `yarn up ${siteDocusaurusPackagesForUpdate}`
-        : `yarn upgrade ${siteDocusaurusPackagesForUpdate}`;
-    };
+    const getUpgradeCommand = async () =>
+      `bun add ${siteDocusaurusPackagesForUpdate}`;
 
     /** @type {import('boxen').Options} */
     const boxenOptions = {
@@ -165,10 +139,15 @@ export default async function beforeCli() {
     console.log(docusaurusUpdateMessage);
   }
 
-  // Notify user if node version needs to be updated
-  if (!semver.satisfies(process.version, requiredVersion)) {
-    logger.error('Minimum Node.js version not met :(');
-    logger.info`You are using Node.js number=${process.version}, Requirement: Node.js number=${requiredVersion}.`;
+  // Docusaurus runs on Bun only
+  if (typeof Bun === 'undefined') {
+    logger.error('Docusaurus must be run with Bun.');
+    logger.info`Use code=${'bun run docusaurus <command>'} or code=${'bunx docusaurus <command>'}.`;
+    process.exit(1);
+  }
+  if (!semver.satisfies(Bun.version, requiredVersion)) {
+    logger.error('Minimum Bun version not met :(');
+    logger.info`You are using Bun number=${Bun.version}, Requirement: Bun number=${requiredVersion}.`;
     process.exit(1);
   }
 }

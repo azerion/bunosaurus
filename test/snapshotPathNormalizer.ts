@@ -139,11 +139,12 @@ function normalizeString(value: string): string {
     // ignore some that look like escape sequences.
     (val) => val.replace(/\\(?!")/g, '/'),
 
-    // Strip the pnpm virtual store dir (isolated nodeLinker)
+    // Strip the pnpm/Bun virtual store dirs (isolated linker)
     // node_modules/.pnpm/react@19.3.0/node_modules/react -> node_modules/react
+    // node_modules/.bun/react@19.3.0+abc/node_modules/react -> node_modules/react
     (val) =>
       val.replace(
-        /node_modules\/\.pnpm\/[^/]+\/node_modules\//g,
+        /node_modules\/\.(?:pnpm|bun)\/[^/]+\/node_modules\//g,
         'node_modules/',
       ),
   ];

@@ -417,7 +417,7 @@ describe('loadFreshModule', () => {
       ).rejects.toThrowErrorMatchingInlineSnapshot(
         `
         [Error: Docusaurus could not load module at path "/some/unknown/module/path.js"]
-        Cause: [Error: Cannot find module '/some/unknown/module/path.js'
+        Cause: [ResolveMessage: Cannot find module '/some/unknown/module/path.js'
         Require stack:
         - <PROJECT_ROOT>/packages/docusaurus-utils/src/moduleUtils.ts]
       `,

@@ -283,7 +283,7 @@ describe('validateSidebars', () => {
         },
       }),
     ).toThrowErrorMatchingInlineSnapshot(
-      `[TypeError: sidebar.forEach is not a function]`,
+      `[TypeError: sidebar.forEach is not a function. (In 'sidebar.forEach(validateSidebarItem)', 'sidebar.forEach' is undefined)]`,
     );
   });
 

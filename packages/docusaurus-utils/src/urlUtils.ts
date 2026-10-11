@@ -165,7 +165,7 @@ export function isValidPathname(str: string): boolean {
 }
 
 export function parseURLOrPath(str: string, base?: string | URL): URL {
-  const url = URL.parse(str, base ?? 'https://example.com');
+  const url = URL.parse(str, String(base ?? 'https://example.com'));
   if (url) {
     return url;
   }

@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 import {describe, expect, it} from 'vitest';
 import {renderHook} from '@testing-library/react';
 import {RouteContextProvider} from '../routeContext';

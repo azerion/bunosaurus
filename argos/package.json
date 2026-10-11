@@ -6,8 +6,8 @@
   "private": true,
   "scripts": {
     "screenshot": "playwright test",
-    "upload": "pnpm exec -- argos upload ./screenshots/chromium",
-    "upload-text-snapshots": "pnpm exec -- argos upload \"../website/build\" --build-name text-snapshots --files styles.css --files \"docs/**/*.html\" --files \"blog/**/*.html\" --files \"**/rss.xml\" --files \"**/atom.xml\" --files \"**/feed.json\" --files sitemap.xml",
+    "upload": "bunx argos upload ./screenshots/chromium",
+    "upload-text-snapshots": "bunx argos upload \"../website/build\" --build-name text-snapshots --files styles.css --files \"docs/**/*.html\" --files \"blog/**/*.html\" --files \"**/rss.xml\" --files \"**/atom.xml\" --files \"**/feed.json\" --files sitemap.xml",
     "report": "playwright show-report"
   },
   "dependencies": {

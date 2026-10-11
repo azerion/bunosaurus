@@ -37,6 +37,8 @@ const ignorePatterns = [
   '**/packages/docusaurus-migrate/lib/**',
   '**/test/**',
   '**/argos/**',
+  // Local benchmark sites (gitignored)
+  '**/bench-sites/**',
 ];
 
 type AliasOptions = NonNullable<ViteUserConfig['resolve']>['alias'];
@@ -127,7 +129,8 @@ export default defineConfig({
     setupFiles: ['test/setup.ts'],
     environment: 'node',
     environmentOptions: {
-      jsdom: {
+      // jsdom doesn't run on the Bun runtime, happy-dom does
+      happyDOM: {
         url: 'https://docusaurus.io/',
       },
     },

@@ -1,0 +1,4 @@
+[install]
+linker = "isolated"
+# Supply-chain hardening carried over from the pnpm setup
+minimumReleaseAge = 604800

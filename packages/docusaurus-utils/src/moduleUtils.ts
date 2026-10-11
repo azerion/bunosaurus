@@ -15,6 +15,9 @@ const jiti = createJiti(__filename, {
   fsCache: true,
   // Bypass Node.js runtime require cache for hot reloads
   moduleCache: false,
+  // On Bun, jiti defaults to native import(), which caches modules forever and
+  // breaks config hot reload: force jiti's own loader instead
+  tryNative: false,
 
   interopDefault: true,
   debug: DEBUG,

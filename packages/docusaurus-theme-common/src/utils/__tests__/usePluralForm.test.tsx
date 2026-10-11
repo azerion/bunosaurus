@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 import {describe, expect, it, vi} from 'vitest';
 import {renderHook} from '@testing-library/react';
 import {Context} from '@docusaurus/core/src/client/docusaurusContext';
@@ -66,7 +66,7 @@ describe('usePluralForm', () => {
     expect(error.mock.calls[0]![0]).toMatchInlineSnapshot(`
       "Failed to use Intl.PluralRules for locale "zh-Hans".
       Docusaurus will fallback to the default (English) implementation.
-      Error: () => undefined is not a constructor
+      Error: Reflect.construct requires the first argument be a constructor
       "
     `);
 
@@ -75,7 +75,7 @@ describe('usePluralForm', () => {
     expect(error.mock.calls[1]![0]).toMatchInlineSnapshot(`
       "Failed to use Intl.PluralRules for locale "zh-Hans".
       Docusaurus will fallback to the default (English) implementation.
-      Error: () => undefined is not a constructor
+      Error: Reflect.construct requires the first argument be a constructor
       "
     `);
 

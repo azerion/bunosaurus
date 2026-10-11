@@ -90,6 +90,8 @@ export default defineConfig(plugins, rules, ignores, {
       ...globals.browser,
       ...globals.node,
       ...globals.commonjs,
+      // Docusaurus runs on the Bun runtime
+      Bun: 'readonly',
       JSX: true,
     },
     parserOptions: {

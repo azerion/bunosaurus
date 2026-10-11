@@ -1,0 +1,49 @@
+diff --git a/dist/chunks/index.C4tKZ0yW.js b/dist/chunks/index.C4tKZ0yW.js
+index bc3ba68c51e55b80df08560ee055e494bf71f259..360d670d997375916061454dcf438b3199a22c7e 100644
+--- a/dist/chunks/index.C4tKZ0yW.js
++++ b/dist/chunks/index.C4tKZ0yW.js
+@@ -486,26 +486,25 @@ class SnapshotState {
+ 		this.unmatched.delete(testId);
+ 	}
+ 	_inferInlineSnapshotStack(stacks) {
+-		// if called inside resolves/rejects, stacktrace is different
+-		const promiseIndex = stacks.findIndex((i) => i.method.match(/__VITEST_(RESOLVES|REJECTS)__/));
+-		if (promiseIndex !== -1) return stacks[promiseIndex + 3];
+-		// support poll + inline snapshot
+-		const pollChainIndex = stacks.findIndex((i) => i.method.match(/__VITEST_POLL_CHAIN__/));
+-		if (pollChainIndex !== -1) return stacks[pollChainIndex + 1];
+-		// inline snapshot function can be named __INLINE_SNAPSHOT_OFFSET_<n>__
+-		// to specify a custom stack offset
+-		for (let i = 0; i < stacks.length; i++) {
+-			const match = stacks[i].method.match(/__INLINE_SNAPSHOT_OFFSET_(\d+)__/);
+-			if (match) return stacks[i + Number(match[1])] ?? null;
++		// Engine-agnostic: V8 and JavaScriptCore (Bun) don't produce the same
++		// number of intermediate frames, so instead of fixed offsets we pick the
++		// first frame after the marker that is outside node_modules (user code).
++		const firstUserFrameAfter = (index) => {
++			for (let i = index + 1; i < stacks.length; i++) if (!/[\\/]node_modules[\\/]/.test(stacks[i].file)) return stacks[i];
++			return null;
++		};
++		const markers = [
++			/__VITEST_(RESOLVES|REJECTS)__/,
++			/__VITEST_POLL_CHAIN__/,
++			/__INLINE_SNAPSHOT_OFFSET_(\d+)__/,
++			/__VITEST_EXTEND_ASSERTION__/,
++			/__INLINE_SNAPSHOT__/
++		];
++		for (const marker of markers) {
++			const index = stacks.findIndex((i) => marker.test(i.method));
++			if (index !== -1) return firstUserFrameAfter(index);
+ 		}
+-		// custom matcher registered via expect.extend() — the wrapper function
+-		// in jest-extend.ts is named __VITEST_EXTEND_ASSERTION__
+-		const customMatcherIndex = stacks.findIndex((i) => i.method.includes("__VITEST_EXTEND_ASSERTION__"));
+-		if (customMatcherIndex !== -1) return stacks[customMatcherIndex + 3] ?? null;
+-		// inline snapshot function is called __INLINE_SNAPSHOT__
+-		// in integrations/snapshot/chai.ts
+-		const stackIndex = stacks.findIndex((i) => i.method.includes("__INLINE_SNAPSHOT__"));
+-		return stackIndex !== -1 ? stacks[stackIndex + 2] : null;
++		return null;
+ 	}
+ 	_addSnapshot(key, receivedSerialized, options) {
+ 		this._dirty = true;

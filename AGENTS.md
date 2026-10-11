@@ -13,8 +13,7 @@ Overview:
 
 Monorepo based on:
 
-- Lerna
-- pnpm workspaces
+- Bun workspaces (Bun is the only supported package manager and runtime)
 
 ### Monorepo
 
@@ -23,7 +22,7 @@ Monorepo based on:
   - `docusaurus-plugin-*` - Official plugins, the main ones are `docs`, `blog`, `pages`
   - `docusaurus-theme-classic/` - Default theme, based on the Infima.dev design system and CSS modules
   - `docusaurus-theme-common/` - Reusable headless theme components and utilities, unopinionated
-  - `docusaurus-bundler/` - Webpack/Rspack bundler abstraction
+  - `docusaurus-bundler/` - Bun.build bundler integration
   - `docusaurus-types/` - TypeScript definitions
   - `create-docusaurus/` - Site initialization CLI tool
 - `examples/` is CLI-generated; never edit it manually. Update `packages/create-docusaurus/templates/` for template changes, including dependency upgrades.
@@ -32,9 +31,8 @@ Packages depend on each other.
 
 Use:
 
-- `pnpm lerna list --toposort` to know in which order to build them
-- `pnpm --filter <package-name> build` to build one in particular
-- `pnpm build:packages` to build them all in the correct order
+- `bun run --filter <package-name> build` to build one in particular
+- `bun run build:packages` to build them all in the correct order
 
 ### Website structure
 
@@ -51,29 +49,28 @@ The main CLI commands available
 
 ### Core Commands
 
-- `pnpm install` - Install dependencies and then build all monorepo packages
-- `pnpm build:packages` - Build all monorepo packages
-- `pnpm watch` - Incremental build of monorepo packages with file watchers
-- `pnpm format` - Format code with oxfmt
-- `pnpm lint` - Run linting (ESLint + Stylelint + spell check + Knip)
-- `pnpm dedupe` - Deduplicate `pnpm-lock.yaml` dependencies, run it after any lockfile change
-- `pnpm test` - Run all tests using Vitest
-- `pnpm clear` - Clean all build artifacts and caches
-- `pnpm --filter <package-name> build` - Build an individual monorepo package
+- `bun install` - Install dependencies and then build all monorepo packages
+- `bun run build:packages` - Build all monorepo packages
+- `bun run watch` - Incremental build of monorepo packages with file watchers
+- `bun run format` - Format code with oxfmt
+- `bun run lint` - Run linting (ESLint + Stylelint + spell check + Knip)
+- `bun run test` - Run all tests using Vitest (on the Bun runtime)
+- `bun run clear` - Clean all build artifacts and caches
+- `bun run --filter <package-name> build` - Build an individual monorepo package
 
 ### Website Development
 
-- `pnpm start:website` - Start the Docusaurus website in dev mode
-- `pnpm build:website` - Build the website for production
-- `pnpm build:website:fast` - Build website for production, only the last few versions, to speed up build time and feedback loop
-- `pnpm serve:website` - Serve the built website locally
-- `pnpm --filter website typecheck` - Ensure the website pass TypeScript type checking
+- `bun run start:website` - Start the Docusaurus website in dev mode
+- `bun run build:website` - Build the website for production
+- `bun run build:website:fast` - Build website for production, only the last few versions, to speed up build time and feedback loop
+- `bun run serve:website` - Serve the built website locally
+- `bun run --filter website typecheck` - Ensure the website pass TypeScript type checking
 
 ### Testing
 
-- `pnpm test` - Run all Vitest tests
-- `pnpm test <path/to/test.file.ts>` - Run single test file
-- `pnpm --filter <package-name> test` - Run tests in a specific package:
+- `bun run test` - Run all Vitest tests
+- `bun run test <path/to/test.file.ts>` - Run single test file
+- `bun run --filter <package-name> test` - Run tests in a specific package:
 
 When a test is failing, run only that test file until it passes. Make sure to run all tests at the end to ensure there's no unexpected failure in other places.
 
@@ -81,13 +78,13 @@ Update Vitest failing snapshots with the `-u` option. Do not blindly update snap
 
 ### Linting & Formatting
 
-- `pnpm format` - Format code with oxfmt
-- `pnpm lint:js` - ESLint for JS/TS files
-- `pnpm lint:style` - Stylelint for CSS files
-- `pnpm lint:spelling` - CSpell for spell checking
-- `pnpm lint:knip` - Knip to find unused files, exports and dependencies (config in `knip.config.ts`)
-- `pnpm lint:deps` - Check that `pnpm-lock.yaml` is deduplicated (`pnpm dedupe --check`)
-- Add `:fix` suffix to auto-fix issues (e.g., `pnpm lint:js:fix`)
+- `bun run format` - Format code with oxfmt
+- `bun run lint:js` - ESLint for JS/TS files
+- `bun run lint:style` - Stylelint for CSS files
+- `bun run lint:spelling` - CSpell for spell checking
+- `bun run lint:knip` - Knip to find unused files, exports and dependencies (config in `knip.config.ts`)
+- `bun run lint:deps` - Check that `bun.lock` is up to date
+- Add `:fix` suffix to auto-fix issues (e.g., `bun run lint:js:fix`)
 
 ## Contributing, Issue and PR Guidelines
 

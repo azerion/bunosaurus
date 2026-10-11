@@ -36,7 +36,7 @@
     "webpack": "^5.111.0"
   },
   "engines": {
-    "node": ">=24.21"
+    "bun": ">=1.4.1"
   },
   "devDependencies": {
     "@types/react-dom": "^19.3.0",

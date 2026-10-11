@@ -84,7 +84,7 @@ describe('readDefaultCodeTranslationMessages', () => {
         dirPath,
       }),
     ).rejects.toThrowErrorMatchingInlineSnapshot(
-      `[RangeError: First argument to Intl.Locale constructor can't be empty or missing]`,
+      `[RangeError: invalid language tag]`,
     );
   });
 

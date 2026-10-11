@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 /**
  * Copyright (c) Facebook, Inc. and its affiliates.
  *
@@ -18,11 +18,16 @@ import {program} from 'commander';
 const packageJson = /** @type {typeof import("../package.json")} */ (
   createRequire(import.meta.url)('../package.json')
 );
-const requiredVersion = packageJson.engines.node;
+const requiredVersion = packageJson.engines.bun;
 
-if (!semver.satisfies(process.version, requiredVersion)) {
-  logger.error('Minimum Node.js version not met :(');
-  logger.info`You are using Node.js number=${process.version}, Requirement: Node.js number=${requiredVersion}.`;
+if (typeof Bun === 'undefined') {
+  logger.error('create-docusaurus must be run with Bun.');
+  logger.info`Use code=${'bun create docusaurus'}.`;
+  process.exit(1);
+}
+if (!semver.satisfies(Bun.version, requiredVersion)) {
+  logger.error('Minimum Bun version not met :(');
+  logger.info`You are using Bun number=${Bun.version}, Requirement: Bun number=${requiredVersion}.`;
   process.exit(1);
 }
 

@@ -1,4 +1,28 @@
-> [!NOTE] **Bunosaurus**: this fork of Docusaurus runs on [Bun](https://bun.sh) only and bundles sites with `Bun.build()` instead of Webpack/Rspack. See [BUNOSAURUS.md](./BUNOSAURUS.md) for the changes, the migration guide and benchmarks.
+# Bunosaurus
+
+Bunosaurus is a fork of Docusaurus (4.0 development version) that runs on [Bun](https://bun.sh) only and bundles sites with [`Bun.build()`](https://bun.sh/docs/bundler) instead of Webpack/Rspack. It is a drop-in replacement: sites install the `@azerion/bunosaurus-*` packages under their `@docusaurus/*` names.
+
+```bash
+bun create @azerion/bunosaurus my-website classic
+```
+
+Existing sites alias their Docusaurus dependencies, for example `"@docusaurus/core": "npm:@azerion/bunosaurus-core@4.0.0"`.
+
+## Performance
+
+[BlueStack developer docs](https://developers.bluestack.app): ~415 Markdown files, 9 docs plugin instances, 2 blogs, 2 locales, 1208 pages. Baseline: Docusaurus 3.10 with `future.faster` (Rspack, SWC, LightningCSS) on Node.js 24. Median of 4 interleaved runs on an AMD Ryzen AI 9 HX 370 laptop.
+
+|  | Docusaurus 3.10 (Rspack) | Bunosaurus |  |
+| --- | --- | --- | --- |
+| Production build, cold | 24.9s | 16.1s | **-35%** |
+| Production build, warm cache | 15.8s | 10.0s | **-37%** |
+| Dev server ready, cold | 8.2s | 5.1s | **-38%** |
+| Dev server ready, warm cache |  | 2.1s |  |
+| Dev server, rebuild after editing a doc | 0.4s (HMR) | 0.6s (hot update) |  |
+
+See [BUNOSAURUS.md](./BUNOSAURUS.md) for the changes compared to Docusaurus, the breaking changes, the migration guide and the benchmark scripts.
+
+---
 
 <div align="center">
   <h1 align="center">

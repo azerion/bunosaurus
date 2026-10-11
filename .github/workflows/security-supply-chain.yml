@@ -77,7 +77,7 @@ jobs:
       # Generate the init template from a given npm dist tag
       - name: Generate published template
         # We want to use the freshest "create-docusaurus" initializer
-        run: sfw bunx create-docusaurus@${{matrix.npm_dist_tag}} ../test-website classic --typescript --skip-install
+        run: sfw bunx @azerion/create-bunosaurus@${{matrix.npm_dist_tag}} ../test-website classic --typescript --skip-install
 
       # Ensure no unexpected lifecycle (preinstall/postinstall scripts)
       # Bun doesn't run the lifecycle scripts of dependencies, unless they are

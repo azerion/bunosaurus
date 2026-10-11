@@ -14,6 +14,7 @@ import ExecutionEnvironment from './exports/ExecutionEnvironment';
 import App from './App';
 import preload from './preload';
 import docusaurus from './docusaurus';
+import {applyHotUpdate} from './hotUpdate';
 
 function Router({children}: {children: ReactNode}): ReactNode {
   return siteConfig.future.experimental_router === 'hash' ? (
@@ -29,6 +30,12 @@ const hydrate = Boolean(process.env.HYDRATE_CLIENT_ENTRY);
 // application (SPA).
 if (ExecutionEnvironment.canUseDOM) {
   window.docusaurus = docusaurus;
+  if (process.env.NODE_ENV === 'development') {
+    // Called by the dev server client script, see bundler/devServer.ts
+    (window as {__DOCUSAURUS_HOT__?: unknown}).__DOCUSAURUS_HOT__ = {
+      apply: applyHotUpdate,
+    };
+  }
   const container = document.getElementById('__docusaurus')!;
 
   const app = (

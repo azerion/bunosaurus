@@ -12,9 +12,30 @@ import registry from '@generated/registry';
 import Loading from '@theme/Loading';
 import flat from '../flat';
 import {RouteContextProvider} from '../routeContext';
+import {createHotRouteComponent} from '../hotUpdate';
 import type {RouteContext} from '@docusaurus/types';
 
 export default function ComponentCreator(
+  path: string,
+  hash: string,
+): ReturnType<typeof Loadable> {
+  if (process.env.NODE_ENV === 'development' && path !== '*') {
+    // The dev server can hot-update the modules loaded by the route
+    const chunkNames = Object.values(
+      flat(routesChunkNames[`${path}-${hash}`]!),
+    );
+    return createHotRouteComponent({
+      modules: chunkNames.flatMap((chunkName) => {
+        const chunkRegistry = registry[chunkName];
+        return chunkRegistry ? [chunkRegistry[1]] : [];
+      }),
+      create: () => createRouteComponent(path, hash),
+    });
+  }
+  return createRouteComponent(path, hash);
+}
+
+function createRouteComponent(
   path: string,
   hash: string,
 ): ReturnType<typeof Loadable> {

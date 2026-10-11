@@ -32,6 +32,9 @@ const JSNaming = 'assets/js/[name].[hash].[ext]';
 // Bun names shared chunks after the entry point: a fixed entry name keeps the
 // entry files (main.<hash>.js/css) distinguishable from shared chunks
 const JSEntryNaming = 'assets/js/main.[hash].[ext]';
+// In dev, URLs must remain stable across rebuilds for hot updates, see
+// bundler/hotUpdate.ts (chunk hashes are replaced by stable IDs)
+const JSDevEntryNaming = 'assets/js/main.[ext]';
 
 async function getStaticDirectories(props: Props): Promise<string[]> {
   const {siteDir, siteConfig} = props;
@@ -197,8 +200,11 @@ export async function createBundlerSetup({
       // which is what the hash router needs (URLs relative to the document
       // would be resolved against the importing chunk URL)
       publicPath: router === 'hash' ? undefined : publicPath,
+      // In dev, plain import() calls: the modulepreload runtime references
+      // all chunks by hash in the entry chunk
+      ...(dev && {modulePreload: false}),
       naming: {
-        entry: JSEntryNaming,
+        entry: dev ? JSDevEntryNaming : JSEntryNaming,
         chunk: JSNaming,
         asset: 'assets/files/[name]-[hash].[ext]',
       },

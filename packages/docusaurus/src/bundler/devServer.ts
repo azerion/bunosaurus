@@ -15,13 +15,46 @@ import {fs, pathExists} from '@docusaurus/fs';
 import {watch, type Watcher} from '@docusaurus/glob';
 import {ClientEntryPath, createBundlerSetup} from './bundleSite';
 import {createSiteLoaderCache} from './loaderCache';
+import {
+  computeHotUpdate,
+  writeDevBuildOutput,
+  type DevBuildSnapshot,
+} from './hotUpdate';
 import type {Server, ServerWebSocket} from 'bun';
 import type {Props} from '@docusaurus/types';
 
 const WebSocketPath = '/__docusaurus/dev-server';
 
-// Reloads the page when the dev server rebuilds the app
-const LiveReloadClientScript = `(() => {
+// Applies the updates sent by the dev server after rebuilding the app:
+// hot updates of route modules and CSS, or page reloads
+const DevClientScript = `(() => {
+  const updateCss = (href) => {
+    const links = [...document.querySelectorAll('link[data-docusaurus-dev-css]')];
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = href + '?t=' + Date.now();
+    link.setAttribute('data-docusaurus-dev-css', 'true');
+    // Remove the previous stylesheet once the new one applies, avoids a flash
+    link.onload = () => links.forEach((previous) => previous.remove());
+    document.head.append(link);
+  };
+  const applyUpdate = async (message) => {
+    const hot = window.__DOCUSAURUS_HOT__;
+    if (!hot) {
+      location.reload();
+      return;
+    }
+    try {
+      await hot.apply({modules: message.modules});
+      if (message.css) {
+        updateCss(message.css);
+      }
+      console.info('[Docusaurus] Hot update applied');
+    } catch (error) {
+      console.error('[Docusaurus] Hot update failed, reloading', error);
+      location.reload();
+    }
+  };
   const connect = () => {
     const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
     const ws = new WebSocket(protocol + '//' + location.host + ${JSON.stringify(
@@ -31,6 +64,8 @@ const LiveReloadClientScript = `(() => {
       const message = JSON.parse(event.data);
       if (message.type === 'reload') {
         location.reload();
+      } else if (message.type === 'hot') {
+        void applyUpdate(message);
       } else if (message.type === 'error') {
         console.error('[Docusaurus] Build failed:\\n' + message.message);
       }
@@ -58,9 +93,9 @@ function renderDevHtml({
     <meta name="generator" content="Docusaurus">
     <title>${escapeHTML(siteConfig.title)}</title>
     ${headTags}
-    ${assets.stylesheets.map((href) => `<link href="${escapeHTML(href)}" rel="stylesheet">`).join('')}
+    ${assets.stylesheets.map((href) => `<link href="${escapeHTML(href)}" rel="stylesheet" data-docusaurus-dev-css="true">`).join('')}
     ${assets.scripts.map((src) => `<script type="module" src="${escapeHTML(src)}"></script>`).join('')}
-    <script>${LiveReloadClientScript}</script>
+    <script>${DevClientScript}</script>
   </head>
   <body>
     ${preBodyTags}
@@ -112,7 +147,8 @@ export type BunDevServer = {
 
 /**
  * The "docusaurus start" dev server: the app is bundled with Bun.build(),
- * rebuilt on file changes, and the browser reloads after each rebuild.
+ * rebuilt on file changes, and the browser applies a hot update or reloads
+ * after each rebuild.
  */
 export async function createBunDevServer({
   getProps,
@@ -146,6 +182,9 @@ export async function createBunDevServer({
   const sockets = new Set<ServerWebSocket<unknown>>();
 
   let assets: DevAssets = {scripts: [], stylesheets: []};
+  let snapshot: DevBuildSnapshot | undefined;
+  // Output path -> content hash, only changed files are written
+  const writtenFiles = new Map<string, string>();
   let staticDirectories: string[] = [];
   let externalWatcher: {dirs: string; watcher: Watcher} | undefined;
 
@@ -154,7 +193,8 @@ export async function createBunDevServer({
     sockets.forEach((socket) => socket.send(data));
   }
 
-  async function build(): Promise<boolean> {
+  // Returns the message to send to browsers, undefined on build failure
+  async function build(): Promise<object | undefined> {
     const props = getProps();
     try {
       const setup = await createBundlerSetup({
@@ -167,50 +207,78 @@ export async function createBunDevServer({
         loaderCache = await createSiteLoaderCache(props);
         loaderCacheProps = props;
       }
-      await fs.rm(devOutDir, {recursive: true, force: true});
+      // Files of previous builds are kept: browsers may still load them
+      if (!snapshot) {
+        await fs.rm(devOutDir, {recursive: true, force: true});
+      }
       const assetEmitter = new AssetEmitter({
         outDir: devOutDir,
         publicPath: setup.publicPath,
       });
-      const output = await bunBuild(
-        'Client',
-        setup.createConfig({
-          isServer: false,
-          outDir: devOutDir,
-          minify: false,
-          assetEmitter,
-          loaderCache,
-        }),
-      );
+      const registryPath = path.join(props.generatedFilesDir, 'registry.js');
+      const dynamicImports = new Map<string, string>();
+      const config = setup.createConfig({
+        isServer: false,
+        outDir: devOutDir,
+        minify: false,
+        assetEmitter,
+        loaderCache,
+        onDynamicImport: ({importer, specifier, key}) => {
+          if (importer === registryPath) {
+            dynamicImports.set(specifier, key);
+          }
+        },
+      });
+      // Built in memory: we rename chunks before writing them
+      delete config.outdir;
+      const output = await bunBuild('Client', config);
       await assetEmitter.writeAll();
 
-      const metafile = output.metafile!;
-      const entry = Object.entries(metafile.outputs).find(
-        ([outputPath, o]) =>
-          outputPath.endsWith('.js') &&
-          o.entryPoint &&
-          path.resolve(o.entryPoint) === ClientEntryPath,
-      );
-      if (!entry) {
-        throw new Error('Docusaurus Bug: client entry output not found');
+      if (!snapshot) {
+        writtenFiles.clear();
       }
-      const toUrl = (file: string) =>
-        `${setup.publicPath}${file.replace(/^\.\//, '')}`;
+      const nextSnapshot = await writeDevBuildOutput({
+        output,
+        outDir: devOutDir,
+        clientEntryPath: ClientEntryPath,
+        dynamicImports,
+        writtenFiles,
+      });
+      const toUrl = (file: string) => `${setup.publicPath}${file}`;
       assets = {
-        scripts: [toUrl(entry[0])],
-        stylesheets: entry[1].cssBundle ? [toUrl(entry[1].cssBundle)] : [],
+        scripts: [toUrl(nextSnapshot.entryPath)],
+        stylesheets: nextSnapshot.cssPath ? [toUrl(nextSnapshot.cssPath)] : [],
       };
-      await watchExternalInputs(Object.keys(metafile.inputs));
-      return true;
+      await watchExternalInputs(Object.keys(output.metafile!.inputs));
+
+      const isFirstBuild = !snapshot;
+      const update = computeHotUpdate(snapshot, nextSnapshot);
+      snapshot = nextSnapshot;
+      if (update.type === 'reload') {
+        if (!isFirstBuild) {
+          logger.info`Reloading the browser page: ${update.reason}`;
+        }
+        return {type: 'reload'};
+      }
+      if (update.type === 'none') {
+        return {type: 'none'};
+      }
+      const moduleCount = Object.keys(update.modules).length;
+      logger.info`Hot update: number=${moduleCount} route module(s)${update.cssChanged ? ' and CSS' : ''}`;
+      return {
+        type: 'hot',
+        modules: _.mapValues(update.modules, toUrl),
+        css: update.cssChanged ? assets.stylesheets[0] : undefined,
+      };
     } catch (error) {
       logger.error(error);
       broadcast({type: 'error', message: String((error as Error).message)});
-      return false;
+      return undefined;
     }
   }
 
   // Serialize rebuilds: a change during a build schedules another build
-  let currentBuild: Promise<boolean> = Promise.resolve(true);
+  let currentBuild: Promise<unknown> = Promise.resolve();
   let pendingBuild = false;
   function scheduleBuild() {
     if (pendingBuild) {
@@ -219,11 +287,10 @@ export async function createBunDevServer({
     pendingBuild = true;
     currentBuild = currentBuild.then(async () => {
       pendingBuild = false;
-      const success = await PerfLogger.async('Rebuild client', build);
-      if (success) {
-        broadcast({type: 'reload'});
+      const message = await PerfLogger.async('Rebuild client', build);
+      if (message) {
+        broadcast(message);
       }
-      return success;
     });
   }
   const onFileChange = _.debounce(scheduleBuild, 100);
@@ -285,7 +352,10 @@ export async function createBunDevServer({
 
   return {
     start: async () => {
-      const firstBuildSuccess = await PerfLogger.async('Bundle client', build);
+      const firstBuildSuccess = !!(await PerfLogger.async(
+        'Bundle client',
+        build,
+      ));
 
       // E2E_TEST=true docusaurus start
       // Makes "docusaurus start" exit immediately on success/error
@@ -350,7 +420,11 @@ export async function createBunDevServer({
           );
           if (file) {
             return new Response(Bun.file(file), {
-              headers: {'access-control-allow-origin': '*'},
+              headers: {
+                'access-control-allow-origin': '*',
+                // The entry URL doesn't change across rebuilds
+                'cache-control': 'no-cache',
+              },
             });
           }
           // Missing assets are not app routes

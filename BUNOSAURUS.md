@@ -8,7 +8,8 @@ Requirements: Bun `>= 1.4.1`. Node.js is not supported.
 
 ### Toolchain
 
-- The monorepo uses Bun workspaces (`bun install`, `bun run`), pnpm and Lerna are gone.
+- The monorepo uses Bun workspaces (`bun install`, `bun run`), pnpm and Lerna are gone. Packages are versioned and published with `admin/scripts/release.ts` (packed with `bun pm pack`; the Publish workflow publishes them with the npm CLI, for npm trusted publishing).
+- All GitHub workflows, the devcontainer, Gitpod and Netlify use Bun.
 - Tests still use Vitest, running on the Bun runtime (`bun run test`). DOM tests use `happy-dom` (jsdom doesn't run on Bun) and Vitest is patched (`patches/vitest@*.patch`) to locate inline snapshots on JavaScriptCore stack traces.
 - The `docusaurus` and `create-docusaurus` CLIs require Bun.
 
@@ -22,7 +23,13 @@ The bundler lives in `packages/docusaurus-bundler/src/bun` (generic parts) and `
 - **Loader cache**: loader results (mostly MDX compilation) are shared by the client and server bundles, and persisted in `node_modules/.cache/docusaurus/loaders`. Set `DOCUSAURUS_NO_PERSISTENT_CACHE=true` to disable it.
 - **SSG** runs in a pool of Bun child processes (`ssg/ssgWorkerProcess.ts`): Bun worker threads don't scale for this CPU-bound work.
 - **Localized sites**: each locale finishes its build (SSG, `postBuild`, broken links check) while the next locale is bundled. Set `DOCUSAURUS_BUILD_LOCALES_SEQUENTIALLY=true` to build locales one after the other.
-- **Dev server** (`docusaurus start`): built on `Bun.serve()`. The app is rebuilt on file changes (cached loader results make rebuilds fast) and the browser reloads. There is no hot module replacement (yet). HTTPS requires `--ssl-cert` and `--ssl-key`.
+- **Dev server** (`docusaurus start`): built on `Bun.serve()`. The app is rebuilt on file changes (cached loader results make rebuilds fast), and the browser applies a hot update when possible (`bundler/hotUpdate.ts`):
+  - route modules (MDX content and its TOC/front matter, page components, route data) are re-imported and the routes using them re-render, without reloading the page;
+  - CSS changes swap the stylesheet;
+  - saves that don't change the output do nothing;
+  - other changes (theme components, config, new routes...) reload the page. There is no React Fast Refresh: component state of updated routes is reset.
+
+  Chunk URLs are kept stable across dev rebuilds: Bun chunk hashes change when an imported chunk changes, and the entry chunk (which contains the route registry) changes on every route edit. HTTPS requires `--ssl-cert` and `--ssl-key`.
 
 ### Breaking changes
 
@@ -66,6 +73,6 @@ Baseline: Docusaurus 3.10 with `future.faster` (Rspack, SWC, LightningCSS) on No
 | Production build, warm (persistent cache) | 15.8s | 10.0s | -37% |
 | Dev server ready, cold | 8.2s | 5.1s | -38% |
 | Dev server ready, warm |  | 2.1s |  |
-| Dev server, rebuild after editing a doc | 0.4s (HMR) | 0.6s (full reload) |  |
+| Dev server, rebuild after editing a doc | 0.4s (HMR) | 0.6s (hot update) |  |
 
 Benchmark scripts: `admin/bench/bench.sh` (build timings) and `admin/bench/compareHtml.ts` (compares the rendered content of 2 builds).

@@ -33,6 +33,29 @@ const canPrefetch = (routePath: string) =>
 const canPreload = (routePath: string) =>
   !isSlowConnection() && !loaded.has(routePath);
 
+type ChunkMap = {files: string[]; chunks: {[chunkName: string]: number[]}};
+
+// The chunk map (chunk name -> asset URLs) is emitted by the bundler, and
+// only fetched lazily on the first prefetch, see bundler/manifest.ts
+let chunkMapPromise: Promise<ChunkMap | null> | undefined;
+function getChunkMap(): Promise<ChunkMap | null> {
+  chunkMapPromise ??= (async () => {
+    const url = document
+      .querySelector<HTMLMetaElement>('meta[name="docusaurus-chunk-map"]')
+      ?.getAttribute('content');
+    if (!url) {
+      return null;
+    }
+    try {
+      const response = await fetch(url);
+      return response.ok ? ((await response.json()) as ChunkMap) : null;
+    } catch {
+      return null;
+    }
+  })();
+  return chunkMapPromise;
+}
+
 const getChunkNamesToLoad = (path: string): string[] =>
   Object.entries(routesChunkNames)
     .filter(
@@ -54,30 +77,27 @@ const prefetch: Docusaurus['prefetch'] = (
   }
   fetched.add(routePath);
 
-  // Find all webpack chunk names needed.
+  // Find all chunk names needed.
   const matches = matchRoutes(routes, routePath);
 
   const chunkNamesNeeded = matches.flatMap((match) =>
     getChunkNamesToLoad(match.route.path),
   );
 
-  // Prefetch all webpack chunk assets file needed.
-  return Promise.all(
-    chunkNamesNeeded.map((chunkName) => {
-      // "__webpack_require__.gca" is injected by ChunkAssetPlugin. Pass it
-      // the name of the chunk you want to load and it will return its URL.
-      // eslint-disable-next-line camelcase
-      const chunkAsset = __webpack_require__.gca(chunkName);
-
-      // In some cases, webpack might decide to optimize further, leading to
-      // the chunk assets being merged to another chunk. In this case, we can
-      // safely filter it out and don't need to load it.
-      if (chunkAsset && !chunkAsset.includes('undefined')) {
-        return prefetchHelper(chunkAsset);
-      }
-      return Promise.resolve();
-    }),
-  );
+  // Prefetch all chunk asset files needed.
+  return getChunkMap().then((chunkMap) => {
+    if (!chunkMap) {
+      return [];
+    }
+    const urls = new Set(
+      chunkNamesNeeded.flatMap((chunkName) =>
+        (chunkMap.chunks[chunkName] ?? []).map(
+          (index) => chunkMap.files[index]!,
+        ),
+      ),
+    );
+    return Promise.all([...urls].map((url) => prefetchHelper(url)));
+  });
 };
 
 const preload: Docusaurus['preload'] = (

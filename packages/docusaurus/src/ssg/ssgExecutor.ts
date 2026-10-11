@@ -6,24 +6,24 @@
  */
 
 import * as path from 'node:path';
-import {pathToFileURL} from 'node:url';
 import os from 'node:os';
 import _ from 'lodash';
 import logger, {PerfLogger} from '@docusaurus/logger';
 import {createSSGParams} from './ssgParams';
 import {renderHashRouterTemplate} from './ssgTemplate';
-import {
-  SSGWorkerThreadCount,
-  SSGWorkerThreadRecyclerMaxMemory,
-  SSGWorkerThreadTaskSize,
-} from './ssgEnv';
+import {SSGWorkerThreadCount, SSGWorkerThreadTaskSize} from './ssgEnv';
 import {generateHashRouterEntrypoint} from './ssgUtils';
 import {createGlobalSSGResult} from './ssgGlobalResult';
 import type {SSGGlobalResult} from './ssgGlobalResult';
 import type {SSGParams} from './ssgParams';
 import type {Props, RouterType} from '@docusaurus/types';
 import type {SiteCollectedData} from '../common';
-import type {ExecuteSSGWorkerThreadTask} from './ssgWorkerThread';
+import type {SSGResult} from './ssgRenderer';
+import type {
+  SSGWorkerMessage,
+  SSGWorkerResponse,
+  SSGWorkerTask,
+} from './ssgWorkerProcess';
 
 type SSGExecutor = {
   run: () => Promise<SSGGlobalResult>;
@@ -85,83 +85,102 @@ function getWorkerColorEnv(): Record<string, string> {
   return {};
 }
 
-// SSG always runs in worker threads, even for small sites
+// SSG always runs in worker processes, even for small sites
 // This isolates the server bundle execution from the main Docusaurus process
+// We use processes rather than threads: Bun worker threads don't scale here
 async function createSSGExecutor({
   params,
   pathnames,
+  locale,
 }: {
   params: SSGParams;
   pathnames: string[];
+  locale: string;
 }): Promise<SSGExecutor> {
-  const numberOfThreads = getNumberOfThreads(pathnames);
+  const numberOfWorkers = getNumberOfThreads(pathnames);
+  const tasks: SSGWorkerTask[] = _.chunk(
+    pathnames,
+    SSGWorkerThreadTaskSize,
+  ).map((taskPathnames, index) => ({id: index + 1, pathnames: taskPathnames}));
 
-  const pool = await PerfLogger.async(
-    `Create SSG thread pool - ${logger.cyan(numberOfThreads)} threads`,
-    async () => {
-      const Tinypool = await import('tinypool').then((m) => m.default);
+  let nextTaskIndex = 0;
+  const results: SSGResult[][] = [];
+  let remainingTasks = tasks.length;
+  const {promise: allDone, resolve, reject} = Promise.withResolvers<void>();
+  if (remainingTasks === 0) {
+    resolve();
+  }
 
-      const workerURL = pathToFileURL(
-        path.resolve(__dirname, 'ssgWorkerThread.js'),
-      );
+  function sendNextTask(worker: Bun.Subprocess) {
+    const task = tasks[nextTaskIndex];
+    if (task) {
+      nextTaskIndex += 1;
+      const message: SSGWorkerMessage = {type: 'task', task};
+      worker.send(message);
+    }
+  }
 
-      return new Tinypool({
-        filename: workerURL.pathname,
-        minThreads: numberOfThreads,
-        maxThreads: numberOfThreads,
-        concurrentTasksPerWorker: 1,
-        runtime: 'worker_threads',
-        isolateWorkers: false,
-        workerData: {params},
-        env: {
-          // Cast is safe
-          // See https://github.com/tinylibs/tinypool/issues/136
-          ...(process.env as Record<string, string>),
-          ...getWorkerColorEnv(),
-        },
-
-        // WORKER MEMORY MANAGEMENT
-        // Allows containing SSG memory leaks with a thread recycling workaround
-        // See https://github.com/facebook/docusaurus/pull/11166
-        // See https://github.com/facebook/docusaurus/issues/11161
-        maxMemoryLimitBeforeRecycle: SSGWorkerThreadRecyclerMaxMemory,
-        resourceLimits: {
-          // For some reason I can't figure out how to limit memory on a worker
-          // See https://x.com/sebastienlorber/status/1920781195618513143
-        },
-      });
-    },
+  const workerPath = path.resolve(__dirname, 'ssgWorkerProcess.js');
+  const workers = await PerfLogger.async(
+    `Create SSG worker processes - ${logger.cyan(numberOfWorkers)} workers`,
+    async () =>
+      Array.from({length: numberOfWorkers}, (_unused, index) => {
+        const worker = Bun.spawn({
+          cmd: [process.execPath, workerPath],
+          env: {
+            ...process.env,
+            ...getWorkerColorEnv(),
+            // Locales can be built concurrently: don't rely on process.env
+            DOCUSAURUS_CURRENT_LOCALE: locale,
+          },
+          stdio: ['ignore', 'inherit', 'inherit'],
+          ipc(message: SSGWorkerResponse, subprocess) {
+            results[message.id - 1] = message.results;
+            // Note, we don't use PerfLogger.async() because all tasks are
+            // submitted at once, while results are received progressively
+            PerfLogger.log(`Result for task ${logger.name(message.id)}`);
+            remainingTasks -= 1;
+            if (remainingTasks === 0) {
+              resolve();
+            } else {
+              sendNextTask(subprocess);
+            }
+          },
+          onExit(_subprocess, exitCode) {
+            if (remainingTasks > 0 && exitCode !== 0) {
+              reject(
+                new Error(
+                  `SSG worker process ${index + 1} exited unexpectedly with code ${exitCode}`,
+                ),
+              );
+            }
+          },
+        });
+        const initMessage: SSGWorkerMessage = {
+          type: 'init',
+          workerId: index + 1,
+          params,
+        };
+        worker.send(initMessage);
+        return worker;
+      }),
   );
-
-  const pathnamesChunks = _.chunk(pathnames, SSGWorkerThreadTaskSize);
-
-  // Tiny wrapper for type-safety
-  const submitTask: ExecuteSSGWorkerThreadTask = async (task) => {
-    const result = await pool.run(task);
-    // Note, we don't use PerfLogger.async() because all tasks are submitted
-    // immediately at once and queued, while results are received progressively
-    PerfLogger.log(`Result for task ${logger.name(task.id)}`);
-    return result;
-  };
 
   return {
     run: async () => {
-      const results = await PerfLogger.async(`Thread pool`, async () => {
-        return Promise.all(
-          pathnamesChunks.map((taskPathnames, taskIndex) => {
-            return submitTask({
-              id: taskIndex + 1,
-              pathnames: taskPathnames,
-            });
-          }),
-        );
+      await PerfLogger.async(`Worker pool`, async () => {
+        // Each worker processes one task at a time
+        if (process.env.DOCUSAURUS_SSG_PROFILE === 'true') {
+          console.log(`SSG pool start at=${Date.now() % 100000}`);
+        }
+        workers.forEach((worker) => sendNextTask(worker));
+        await allDone;
       });
-      const allResults = results.flat();
-      return createGlobalSSGResult(allResults);
+      return createGlobalSSGResult(results.flat());
     },
 
     destroy: async () => {
-      await pool.destroy();
+      workers.forEach((worker) => worker.kill());
     },
   };
 }
@@ -195,6 +214,7 @@ export async function executeSSG({
   const executor = await createSSGExecutor({
     params,
     pathnames: props.routesPaths,
+    locale: props.i18n.currentLocale,
   });
   const result = await executor.run();
   await executor.destroy();

@@ -8,7 +8,8 @@
 import logger, {PerfLogger} from '@docusaurus/logger';
 import openBrowser from '../utils/openBrowser/openBrowser';
 import {setupSiteFileWatchers} from './watcher';
-import {createWebpackDevServer} from './webpack';
+import {createBunDevServer} from '../../bundler/devServer';
+import getHttpsConfig from './getHttpsConfig';
 import {createReloadableSite} from './utils';
 import type {LoadContextParams} from '../../server/site';
 import type {HostPortOptions} from '../../server/getHostPort';
@@ -47,10 +48,21 @@ async function doStart(
     },
   );
 
-  const devServer = await createWebpackDevServer({
-    props: reloadableSite.get().props,
-    cliOptions,
-    openUrlContext: reloadableSite.openUrlContext,
+  const httpsConfig = await getHttpsConfig({
+    https: cliOptions.https,
+    sslCert: cliOptions.sslCert,
+    sslKey: cliOptions.sslKey,
+  });
+  if (httpsConfig === true) {
+    logger.warn`The Docusaurus dev server requires a certificate and key to serve over HTTPS (--ssl-cert and --ssl-key), the site is served over HTTP.`;
+  }
+
+  const devServer = await createBunDevServer({
+    getProps: () => reloadableSite.get().props,
+    host: reloadableSite.openUrlContext.host,
+    port: reloadableSite.openUrlContext.port,
+    poll: cliOptions.poll,
+    tls: typeof httpsConfig === 'object' ? httpsConfig : undefined,
   });
 
   ['SIGINT', 'SIGTERM'].forEach((sig) => {

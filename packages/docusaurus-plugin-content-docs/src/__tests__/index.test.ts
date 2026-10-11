@@ -11,12 +11,8 @@ import fs from 'node:fs/promises';
 import _ from 'lodash';
 import {isMatch} from 'picomatch';
 import {Command} from 'commander';
-import webpack from 'webpack';
 import {loadContext} from '@docusaurus/core/src/server/site';
-import {
-  applyConfigureWebpack,
-  createConfigureWebpackUtils,
-} from '@docusaurus/core/src/webpack/configure';
+import {loadBundlerContributions} from '@docusaurus/core/src/bundler/contributions';
 import {sortRoutes} from '@docusaurus/core/src/server/plugins/routeConfig';
 import {getLocaleConfig, posixPath} from '@docusaurus/utils';
 import {normalizePluginOptions} from '@docusaurus/utils-validation';
@@ -28,7 +24,7 @@ import {DisabledSidebars} from '../sidebars';
 import cliDocs from '../cli';
 import {validateOptions} from '../options';
 
-import type {RouteConfig, Validate, Plugin} from '@docusaurus/types';
+import type {LoadedPlugin, RouteConfig, Validate} from '@docusaurus/types';
 import type {
   LoadedVersion,
   Options,
@@ -314,25 +310,20 @@ describe('simple website', () => {
 
     const content = await plugin.loadContent?.();
 
-    const config = applyConfigureWebpack({
-      configureWebpack: plugin.configureWebpack as NonNullable<
-        Plugin['configureWebpack']
-      >,
-      config: {
-        entry: './src/index.js',
-        output: {
-          filename: 'main.js',
-          path: path.resolve(__dirname, 'dist'),
-        },
-      },
+    const contributions = loadBundlerContributions({
+      plugins: [{...plugin, content} as LoadedPlugin],
       isServer: false,
-      configureWebpackUtils: await createConfigureWebpackUtils({
-        siteConfig: {},
-      }),
-      content,
+      publicPath: '/',
     });
-    const errors = webpack.validate(config);
-    expect(errors).toBeUndefined();
+    expect(contributions.aliases).toEqual({
+      '~docs': expect.stringContaining('docusaurus-plugin-content-docs'),
+    });
+    const mdxRule = contributions.rules.find(
+      (rule) => rule.test instanceof RegExp && rule.test.test('doc.mdx'),
+    );
+    expect(mdxRule?.use[0]?.loader).toEqual(
+      expect.stringContaining('mdx-loader'),
+    );
   });
 
   it('content', async () => {

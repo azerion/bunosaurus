@@ -16,9 +16,7 @@ type PollingOptions = {
   interval: number | undefined;
 };
 
-export function createPollingOptions(
-  cliOptions: StartCLIOptions,
-): PollingOptions {
+function createPollingOptions(cliOptions: StartCLIOptions): PollingOptions {
   return {
     usePolling: !!cliOptions.poll,
     interval: Number.isInteger(cliOptions.poll)

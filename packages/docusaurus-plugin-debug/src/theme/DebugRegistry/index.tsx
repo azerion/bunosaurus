@@ -15,13 +15,13 @@ export default function DebugRegistry(): ReactNode {
     <DebugLayout>
       <h2>Registry</h2>
       <ul className="clean-list">
-        {Object.values(registry).map(([, aliasedPath, resolved]) => (
-          <li key={aliasedPath} className={styles.listItem}>
+        {Object.entries(registry).map(([chunkName, [, aliasedPath]]) => (
+          <li key={chunkName} className={styles.listItem}>
             <div style={{marginBottom: '10px'}}>
-              Aliased Path: <code>{aliasedPath}</code>
+              Chunk Name: <code>{chunkName}</code>
             </div>
             <div>
-              Resolved Path: <code>{resolved}</code>
+              Aliased Path: <code>{aliasedPath}</code>
             </div>
           </li>
         ))}

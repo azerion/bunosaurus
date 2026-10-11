@@ -24,7 +24,6 @@ export default function ComponentCreator(
       loading: Loading,
       loader: () => import('@theme/NotFound'),
       modules: ['@theme/NotFound'],
-      webpack: () => [require.resolveWeak('@theme/NotFound')],
       render(loaded, props) {
         const NotFound = loaded.default;
         return (
@@ -42,7 +41,6 @@ export default function ComponentCreator(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const loader: {[key: string]: () => Promise<any>} = {};
   const modules: string[] = [];
-  const optsWebpack: string[] = [];
 
   // A map from prop names to chunk names.
   // e.g. Suppose the plugin added this as route:
@@ -56,7 +54,6 @@ export default function ComponentCreator(
     if (chunkRegistry) {
       loader[keyPath] = chunkRegistry[0];
       modules.push(chunkRegistry[1]);
-      optsWebpack.push(chunkRegistry[2]);
     }
   });
 
@@ -64,7 +61,6 @@ export default function ComponentCreator(
     loading: Loading,
     loader,
     modules,
-    webpack: () => optsWebpack,
     render(
       loaded: {[keyPath: string]: {[exportedName: string]: unknown}},
       props,

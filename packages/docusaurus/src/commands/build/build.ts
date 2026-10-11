@@ -10,7 +10,7 @@ import {mapAsyncSequential} from '@docusaurus/utils';
 import {realpath} from '@docusaurus/fs';
 import {type LoadContextParams} from '../../server/site';
 import {getLocaleList} from '../../server/i18n';
-import {buildLocale, type BuildLocaleParams} from './buildLocale';
+import {bundleLocale, type BuildLocaleParams} from './buildLocale';
 import {loadSiteConfig} from '../../server/config';
 
 export type BuildCLIOptions = Pick<LoadContextParams, 'config' | 'outDir'> & {
@@ -45,11 +45,25 @@ export async function build(
     logger.info`Website will be built for all these locales: ${locales}`;
   }
 
-  await PerfLogger.async(`Build`, () =>
-    mapAsyncSequential(locales, async (locale) => {
-      await tryToBuildLocale({siteDir, locale, cliOptions});
-    }),
-  );
+  await PerfLogger.async(`Build`, async () => {
+    // Escape hatch to build localized sites fully sequentially
+    if (process.env.DOCUSAURUS_BUILD_LOCALES_SEQUENTIALLY === 'true') {
+      await mapAsyncSequential(locales, async (locale) => {
+        const finish = await tryToBundleLocale({siteDir, locale, cliOptions});
+        await finish();
+      });
+      return;
+    }
+    // Localized sites are loaded and bundled sequentially (the site config
+    // can depend on the current locale env variable), but each locale
+    // finishes its build (SSG, postBuild...) while the next one is bundled
+    const finishing: Promise<void>[] = [];
+    for (const locale of locales) {
+      const finish = await tryToBundleLocale({siteDir, locale, cliOptions});
+      finishing.push(finish());
+    }
+    await Promise.all(finishing);
+  });
 
   logger.info`Use code=${'npm run serve'} command to test your build locally.`;
 }
@@ -98,33 +112,25 @@ async function getLocalesToBuild({
   });
 }
 
-async function tryToBuildLocale(params: BuildLocaleParams) {
-  try {
-    await PerfLogger.async(`${logger.name(params.locale)}`, async () => {
-      // Note: I tried to run buildLocale in worker_threads (still sequentially)
-      // It didn't work and I got SIGSEGV / SIGBUS errors
-      // See https://x.com/sebastienlorber/status/1848413716372480338
-      await runBuildLocaleTask(params);
-    });
-  } catch (err) {
-    throw new Error(
+async function tryToBundleLocale(
+  params: BuildLocaleParams,
+): Promise<() => Promise<void>> {
+  const wrapError = (err: unknown) =>
+    new Error(
       logger.interpolate`Unable to build website for locale name=${params.locale}.`,
-      {
-        cause: err,
-      },
+      {cause: err},
     );
+  try {
+    const finish = await PerfLogger.async(
+      `${logger.name(params.locale)}`,
+      () => bundleLocale(params),
+    );
+    return () =>
+      finish().catch((err) => {
+        throw wrapError(err);
+      });
+  } catch (err) {
+    throw wrapError(err);
   }
 }
 
-async function runBuildLocaleTask(params: BuildLocaleParams) {
-  // Note: I tried to run buildLocale task in worker_threads (sequentially)
-  // It didn't work and I got SIGSEGV / SIGBUS errors
-  // Goal was to isolate memory of each localized site build
-  // See also https://x.com/sebastienlorber/status/1848413716372480338
-  //
-  // Running in child_process worked but is more complex and requires
-  // specifying the memory of the child process + weird logging issues to fix
-  //
-  // Note in the future we could try to enable concurrent localized site builds
-  await buildLocale(params);
-}

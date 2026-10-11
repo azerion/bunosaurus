@@ -66,11 +66,4 @@ if (ExecutionEnvironment.canUseDOM) {
   preload(window.location.pathname).then(() => {
     startTransition(renderApp);
   });
-
-  // Webpack Hot Module Replacement API
-  if (module.hot) {
-    // Self-accepting method/ trick
-    // (https://github.com/webpack/webpack-dev-server/issues/100#issuecomment-290911036)
-    module.hot.accept();
-  }
 }

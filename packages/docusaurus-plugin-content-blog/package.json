@@ -19,7 +19,7 @@
   "scripts": {
     "build": "tsc --build",
     "watch": "tsc --build --watch",
-    "test:generate-build-snap": "pnpm docusaurus build src/__tests__/__fixtures__/website --out-dir build-snap && pnpm rimraf src/__tests__/__fixtures__/website/.docusaurus && pnpm rimraf src/__tests__/__fixtures__/website/build-snap/assets && git add src/__tests__/__fixtures__/website/build-snap"
+    "test:generate-build-snap": "bun run docusaurus build src/__tests__/__fixtures__/website --out-dir build-snap && rimraf src/__tests__/__fixtures__/website/.docusaurus && rimraf src/__tests__/__fixtures__/website/build-snap/assets && git add src/__tests__/__fixtures__/website/build-snap"
   },
   "repository": {
     "type": "git",
@@ -50,8 +50,7 @@
     "srcset": "^5.0.3",
     "tslib": "^2.8.1",
     "unist-util-visit": "^5.1.0",
-    "utility-types": "^3.11.0",
-    "webpack": "^5.111.0"
+    "utility-types": "^3.11.0"
   },
   "peerDependencies": {
     "react": "^19.3.0",
@@ -67,6 +66,7 @@
     "remark-gfm": "^4.0.1",
     "to-vfile": "^8.0.0",
     "tree-node-cli": "^3.0.0",
-    "unified": "^11.0.5"
+    "unified": "^11.0.5",
+    "webpack": "^5.111.0"
   }
 }

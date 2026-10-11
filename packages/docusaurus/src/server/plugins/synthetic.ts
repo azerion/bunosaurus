@@ -7,11 +7,11 @@
 
 import path from 'node:path';
 import {createMDXLoaderItem} from '@docusaurus/mdx-loader';
-import type {RuleSetRule} from 'webpack';
 import type {
   HtmlTagObject,
   LoadContext,
   InitializedPlugin,
+  WebpackRuleSetRule as RuleSetRule,
 } from '@docusaurus/types';
 
 /**

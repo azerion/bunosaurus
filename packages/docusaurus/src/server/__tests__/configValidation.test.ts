@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import {describe, expect, it} from 'vitest';
+import {describe, expect, it, vi} from 'vitest';
 import {getVcsPreset} from '@docusaurus/utils';
 import {
   ConfigSchema,
@@ -1134,18 +1134,17 @@ describe('storage', () => {
     `);
   });
 
-  it('rejects future.experimental_faster', () => {
-    expect(() =>
-      normalizeConfig({
-        future: {
-          // @ts-expect-error: testing removed config
-          experimental_faster: true,
-        },
-      }),
-    ).toThrowErrorMatchingInlineSnapshot(`
-      [Error: The Docusaurus config \`future.experimental_faster\` has been removed. Docusaurus now uses Rspack by default. To keep using Webpack and Babel (deprecated), use \`siteConfig.webpack: true\`.
-      ]
-    `);
+  it('ignores legacy future.experimental_faster with a warning', () => {
+    using warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const config = normalizeConfig({
+      future: {
+        // @ts-expect-error: testing legacy config
+        experimental_faster: true,
+      },
+    });
+    expect(config.future).not.toHaveProperty('experimental_faster');
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn.mock.calls[0]![0]).toContain('future.experimental_faster');
   });
 
   describe('type', () => {
@@ -1578,33 +1577,30 @@ describe('future', () => {
     });
   });
 
-  it('rejects future.faster', () => {
-    expect(() =>
-      normalizeConfig({
-        future: {
-          // @ts-expect-error: testing removed config
-          faster: {rspackBundler: true},
-        },
-      }),
-    ).toThrowErrorMatchingInlineSnapshot(`
-      [Error: The Docusaurus config \`future.faster\` has been removed. Docusaurus now uses Rspack by default. To keep using Webpack and Babel (deprecated), use \`siteConfig.webpack: true\`.
-      ]
-    `);
+  it('ignores legacy future.faster with a warning', () => {
+    using warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const config = normalizeConfig({
+      future: {
+        // @ts-expect-error: testing legacy config
+        faster: {rspackBundler: true},
+      },
+    });
+    expect(config.future).not.toHaveProperty('faster');
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn.mock.calls[0]![0]).toContain('future.faster');
   });
 
-  it('rejects removed future.v4', () => {
-    expect(() =>
-      normalizeConfig({
-        future: {
-          // @ts-expect-error: testing removed config
-          v4: true,
-        },
-      }),
-    ).toThrowErrorMatchingInlineSnapshot(`
-      [Error: These field(s) ("future.v4",) are not recognized in docusaurus.config.js.
-      If you still want these fields to be in your configuration, put them in the "customFields" field.
-      See https://docusaurus.io/docs/api/docusaurus-config/#customfields]
-    `);
+  it('ignores legacy future.v4 with a warning', () => {
+    using warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const config = normalizeConfig({
+      future: {
+        // @ts-expect-error: testing legacy config
+        v4: true,
+      },
+    });
+    expect(config.future).not.toHaveProperty('v4');
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn.mock.calls[0]![0]).toContain('future.v4');
   });
 });
 

@@ -6,23 +6,22 @@
  */
 
 import type {ReactNode} from 'react';
-import {renderToPipeableStream} from 'react-dom/server';
-import {PassThrough} from 'node:stream';
-import {text} from 'node:stream/consumers';
+import {renderToReadableStream} from 'react-dom/server';
 
+// Bun's react-dom/server build exposes the Web Streams API only
+// We wait for all Suspense boundaries to be ready: SSG needs the full HTML
 // See also https://github.com/facebook/react/issues/31134
 // See also https://github.com/facebook/docusaurus/issues/9985#issuecomment-2396367797
 export async function renderToHtml(app: ReactNode): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const passThrough = new PassThrough();
-    const {pipe} = renderToPipeableStream(app, {
-      onError(error) {
-        reject(error);
-      },
-      onAllReady() {
-        pipe(passThrough);
-        text(passThrough).then(resolve, reject);
-      },
-    });
+  let renderError: unknown;
+  const stream = await renderToReadableStream(app, {
+    onError(error) {
+      renderError ??= error;
+    },
   });
+  await stream.allReady;
+  if (renderError) {
+    throw renderError;
+  }
+  return new Response(stream).text();
 }

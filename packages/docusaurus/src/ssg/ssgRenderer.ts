@@ -5,13 +5,10 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import {createRequire} from 'node:module';
-import path from 'node:path';
-import {compileFunction} from 'node:vm';
+import {pathToFileURL} from 'node:url';
 import pMap from 'p-map';
 import logger, {PerfLogger} from '@docusaurus/logger';
 import {getHtmlMinifier} from '@docusaurus/bundler';
-import {fs} from '@docusaurus/fs';
 import {
   compileSSGTemplate,
   renderSSGTemplate,
@@ -39,54 +36,58 @@ export type SSGSuccess = {
   };
 };
 
+// Errors are serialized as plain objects: the Bun worker threads don't
+// preserve the message/stack/cause of Error instances posted to the main thread
+export type SerializedError = {
+  name: string;
+  message: string;
+  stack?: string;
+  cause?: SerializedError;
+};
+
 export type SSGError = {
   success: false;
   pathname: string;
-  error: Error;
+  error: SerializedError;
 };
 
-export type SSGResult = SSGSuccess | SSGError;
-
-// Evaluates the server bundle as a CommonJS module, like Node.js would do
-// We don't use an isolated vm context on purpose: SSG runs in worker threads
-// that already isolate it from the main Docusaurus process
-// Running in the current context is faster and avoids reading all the globals
-function evaluateServerBundle({
-  source,
-  serverBundlePath,
-}: {
-  source: string;
-  serverBundlePath: string;
-}): {default?: AppRenderer['render']} {
-  const moduleFunction = compileFunction(
-    source,
-    ['exports', 'require', 'module', '__filename', '__dirname'],
-    {filename: serverBundlePath},
-  );
-  const module = {exports: {}};
-  moduleFunction.call(
-    module.exports,
-    module.exports,
-    createRequire(serverBundlePath),
-    module,
-    serverBundlePath,
-    path.dirname(serverBundlePath),
-  );
-  return module.exports;
+function serializeError(error: unknown): SerializedError {
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+      cause:
+        error.cause !== undefined ? serializeError(error.cause) : undefined,
+    };
+  }
+  return {name: 'Error', message: String(error)};
 }
+
+export function deserializeError(serialized: SerializedError): Error {
+  const error = new Error(serialized.message, {
+    cause: serialized.cause ? deserializeError(serialized.cause) : undefined,
+  });
+  error.name = serialized.name;
+  if (serialized.stack) {
+    error.stack = serialized.stack;
+  }
+  return error;
+}
+
+export type SSGResult = SSGSuccess | SSGError;
 
 async function loadAppRenderer({
   serverBundlePath,
 }: {
   serverBundlePath: string;
 }): Promise<AppRenderer> {
-  const source = await PerfLogger.async(`Load server bundle`, () =>
-    fs.readFile(serverBundlePath, 'utf8'),
-  );
-
-  const serverEntry = await PerfLogger.async(`Evaluate server bundle`, () =>
-    evaluateServerBundle({source, serverBundlePath}),
-  );
+  // The server bundle is an ES module built for the Bun runtime
+  // SSG runs in worker threads that already isolate it from the main process
+  const serverEntry = (await PerfLogger.async(
+    `Load server bundle`,
+    () => import(pathToFileURL(serverBundlePath).href),
+  )) as {default?: AppRenderer['render']};
 
   if (!serverEntry?.default || typeof serverEntry.default !== 'function') {
     throw new Error(
@@ -96,6 +97,10 @@ async function loadAppRenderer({
 
   return {render: serverEntry.default};
 }
+
+// Wall-clock time accumulated per SSG step (overlapping due to concurrency)
+// Printed by worker processes with DOCUSAURUS_SSG_PROFILE=true
+export const SSGProfile = {render: 0, template: 0, minify: 0, write: 0};
 
 export type SSGRenderer = {
   renderPathnames: (pathnames: string[]) => Promise<SSGResult[]>;
@@ -170,19 +175,27 @@ async function generateStaticFile({
 }): Promise<SSGResult> {
   try {
     // This only renders the app HTML
+    let t = performance.now();
     const appRenderResult = await appRenderer.render({pathname});
+    SSGProfile.render += performance.now() - t;
+    t = performance.now();
     // This renders the full page HTML, including head tags...
     const fullPageHtml = renderSSGTemplate({
       params,
       result: appRenderResult,
       ssgTemplate,
     });
+    SSGProfile.template += performance.now() - t;
+    t = performance.now();
     const minifierResult = await htmlMinifier.minify(fullPageHtml);
+    SSGProfile.minify += performance.now() - t;
+    t = performance.now();
     await writeStaticFile({
       pathname,
       content: minifierResult.code,
       params,
     });
+    SSGProfile.write += performance.now() - t;
 
     const collectedData = reduceCollectedData(appRenderResult.collectedData);
 
@@ -204,9 +217,7 @@ async function generateStaticFile({
     return {
       success: false,
       pathname,
-      error: new Error(message, {
-        cause: error,
-      }),
+      error: serializeError(new Error(message, {cause: error})),
     };
   }
 }

@@ -65,12 +65,18 @@ function genClientModules({
   return generate(
     generatedFilesDir,
     'client-modules.js',
-    `export default [
-${clientModules
-  // Use `require()` because `import()` is async but client modules can have CSS
-  // and the order matters for loading CSS.
-  .map((clientModule) => `  require("${escapePath(clientModule)}"),`)
-  .join('\n')}
+    // Static imports preserve the client modules order, which matters for CSS
+    // We don't use require(): it forces ES modules to be wrapped in lazy init
+    // functions, which is less efficient and can break bundler code splitting
+    `${clientModules
+      .map(
+        (clientModule, index) =>
+          `import * as clientModule${index} from "${escapePath(clientModule)}";`,
+      )
+      .join('\n')}
+
+export default [
+${clientModules.map((_clientModule, index) => `  clientModule${index},`).join('\n')}
 ];
 `,
   );

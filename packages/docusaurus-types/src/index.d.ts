@@ -89,6 +89,13 @@ export {
 
 export {CurrentBundler} from './bundler';
 
+// The configureWebpack() plugin lifecycle is typed with Webpack types
+// Docusaurus bundles with Bun, but interprets this subset of Webpack config
+export type {
+  Configuration as WebpackConfiguration,
+  RuleSetRule as WebpackRuleSetRule,
+} from 'webpack';
+
 export {
   RouteConfig,
   PluginRouteConfig,

@@ -23,6 +23,8 @@ function themePackageConfig({
 
 const config: KnipConfig = {
   ignore: ['**/__fixtures__/**'],
+  // Local benchmark sites (gitignored)
+  ignoreWorkspaces: ['bench-sites/*'],
   ignoreDependencies: [
     // Docusaurus client API aliases, see packages/docusaurus/src/client/exports
     // Plugins and themes depend on @docusaurus/core for these aliases
@@ -40,12 +42,16 @@ const config: KnipConfig = {
     'openssl',
     // Not installed, expected to be run through npx
     'serve',
+    // TODO: upstream release workflows (publish.yml) not migrated to Bun yet
+    'lerna',
   ],
   workspaces: {
     '.': {
       entry: [
         // Vitest alias for @generated/* modules
         'test/emptyModule.ts',
+        // Benchmark scripts, run directly with bun
+        'admin/bench/*.ts',
       ],
       ignore: ['examples/**'],
       ignoreDependencies: [
@@ -63,14 +69,18 @@ const config: KnipConfig = {
         'playwright',
       ],
     },
+    argos: {
+      // Run directly with bun, see the package.json scripts
+      entry: ['normalizeTextSnapshots.mjs'],
+    },
     'admin/new.docusaurus.io': {
       // Knip enables this plugin from dependencies, but the site has none
       // The plugin reads functions entry points from netlify.toml
       netlify: true,
     },
     'admin/scripts': {
-      // Run directly with node, or through the package bin commands
-      entry: ['*.js'],
+      // Run directly with bun, or through the package bin commands
+      entry: ['*.{js,ts}'],
     },
     'packages/create-docusaurus': {
       // Used to test the CLI package
@@ -85,7 +95,7 @@ const config: KnipConfig = {
         'src/client/serverEntry.tsx',
         'src/client/exports/*.{ts,tsx}',
         'src/client/theme-fallback/**/*.tsx',
-        'src/ssg/ssgWorkerThread.ts',
+        'src/ssg/ssgWorkerProcess.ts',
         'src/babel/preset.ts',
         // Ambient declarations with triple-slash directives
         'src/**/*.d.ts',
@@ -173,9 +183,10 @@ const config: KnipConfig = {
         '_dogfooding/_asset-tests/**',
       ],
       ignoreDependencies: [
+        // Run through bunx, see netlify:test script
+        'netlify-cli',
         // Plugins and themes referenced by short name in docusaurus.config.ts
         '@docusaurus/plugin-pwa',
-        '@docusaurus/plugin-rsdoctor',
         '@docusaurus/theme-mermaid',
         // Netlify build plugin, see netlify.toml
         'netlify-plugin-cache',

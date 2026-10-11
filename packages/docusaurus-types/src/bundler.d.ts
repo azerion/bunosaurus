@@ -12,6 +12,6 @@ import type webpack from 'webpack';
 // When compatibility doesn't work, use "CurrentBundler.name"
 // See https://github.com/facebook/docusaurus/pull/10402
 export type CurrentBundler = {
-  name: 'webpack' | 'rspack';
+  name: 'webpack' | 'rspack' | 'bun';
   instance: typeof webpack;
 };

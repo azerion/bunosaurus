@@ -6,13 +6,7 @@
  */
 
 import path from 'node:path';
-import {type Configuration} from 'webpack';
-import {
-  compile,
-  createJsLoaderFactory,
-  getProgressBarPlugin,
-  getMinimizers,
-} from '@docusaurus/bundler';
+import {bunBuild} from '@docusaurus/bundler';
 import {injectManifest} from 'workbox-build';
 import {normalizeUrl} from '@docusaurus/utils';
 import logger from '@docusaurus/logger';
@@ -114,61 +108,23 @@ export default function pluginPWA(
     },
 
     async postBuild(props) {
-      const swSourceFileTest = /\.m?js$/;
-
-      const ProgressBarPlugin = await getProgressBarPlugin({
-        currentBundler: props.currentBundler,
-      });
-
-      // Rspack: builtin:swc-loader, Webpack (deprecated): babel-loader
-      const getJSLoader = await createJsLoaderFactory({
-        siteConfig: props.siteConfig,
-      });
-
-      const swWebpackConfig: Configuration = {
-        entry: require.resolve('./sw.js'),
-        output: {
-          path: outDir,
-          filename: 'sw.js',
-          publicPath: baseUrl,
+      // The service worker is a classic script, bundled on its own
+      await bunBuild('Service Worker', {
+        entrypoints: [require.resolve('./sw.js')],
+        outdir: outDir,
+        naming: 'sw.js',
+        target: 'browser',
+        format: 'iife',
+        minify: !debug,
+        sourcemap: debug ? 'linked' : 'none',
+        publicPath: baseUrl,
+        env: 'disable',
+        define: {
+          'process.env.NODE_ENV': JSON.stringify(
+            debug ? 'development' : 'production',
+          ),
+          'process.env.PWA_SW_CUSTOM': JSON.stringify(swCustom ?? ''),
         },
-        target: 'webworker',
-        mode: debug ? 'development' : 'production',
-        devtool: debug ? 'source-map' : false,
-        optimization: {
-          splitChunks: false,
-          minimize: !debug,
-          // See https://developers.google.com/web/tools/workbox/guides/using-bundlers#webpack
-          minimizer: debug
-            ? []
-            : await getMinimizers({
-                currentBundler: props.currentBundler,
-              }),
-        },
-        plugins: [
-          new props.currentBundler.instance.EnvironmentPlugin({
-            // Fallback value required with Webpack 5
-            PWA_SW_CUSTOM: swCustom ?? '',
-          }),
-          new ProgressBarPlugin({
-            name: 'Service Worker',
-            color: 'red',
-          }),
-        ],
-        module: {
-          rules: [
-            {
-              test: swSourceFileTest,
-              exclude: /node_modules/,
-              use: getJSLoader({isServer: false}),
-            },
-          ],
-        },
-      };
-
-      await compile({
-        configs: [swWebpackConfig],
-        currentBundler: props.currentBundler,
       });
 
       const swDest = path.resolve(props.outDir, 'sw.js');

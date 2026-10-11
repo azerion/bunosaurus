@@ -190,10 +190,6 @@ export type RouteChunkNames = {
  *     content.foo: () => import('./doc1.md'),
  *   },
  *   optsModules: ['./Pages.js', './doc1.md'],
- *   optsWebpack: [
- *     require.resolveWeak('./Pages.js'),
- *     require.resolveWeak('./doc1.md'),
- *   ],
  * }
  * ```
  *
@@ -204,6 +200,5 @@ export type Registry = {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Loader: () => Promise<any>,
     ModuleName: string,
-    ResolvedModuleName: string,
   ];
 };

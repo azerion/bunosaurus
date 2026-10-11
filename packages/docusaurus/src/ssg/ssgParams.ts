@@ -9,14 +9,14 @@ import {DOCUSAURUS_VERSION} from '@docusaurus/utils';
 import {PerfLogger} from '@docusaurus/logger';
 import {readJSON} from '@docusaurus/fs';
 import DefaultSSGTemplate from './ssgTemplate.html';
-import type {Manifest} from 'react-loadable-ssr-addon-v5-slorber';
+import type {ClientManifest} from '../bundler/manifest';
 import type {Props} from '@docusaurus/types';
 
 // Keep these params serializable
 // This makes it possible to use workers
 export type SSGParams = {
   trailingSlash: boolean | undefined;
-  manifest: Manifest;
+  manifest: ClientManifest;
   headTags: string;
   preBodyTags: string;
   postBodyTags: string;
@@ -38,9 +38,9 @@ export async function createSSGParams({
   serverBundlePath: string;
   clientManifestPath: string;
 }): Promise<SSGParams> {
-  const manifest: Manifest = await PerfLogger.async(
+  const manifest = await PerfLogger.async(
     'Read client manifest',
-    () => readJSON(clientManifestPath) as Promise<Manifest>,
+    () => readJSON(clientManifestPath) as Promise<ClientManifest>,
   );
 
   const params: SSGParams = {
@@ -48,7 +48,9 @@ export async function createSSGParams({
     outDir: props.outDir,
     baseUrl: props.baseUrl,
     manifest,
-    headTags: props.headTags,
+    headTags: manifest.chunkMapUrl
+      ? `${props.headTags}\n<meta name="docusaurus-chunk-map" content="${manifest.chunkMapUrl}">`
+      : props.headTags,
     preBodyTags: props.preBodyTags,
     postBodyTags: props.postBodyTags,
     ssgTemplateContent: props.siteConfig.ssrTemplate ?? DefaultSSGTemplate,

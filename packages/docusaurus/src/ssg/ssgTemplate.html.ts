@@ -19,7 +19,10 @@ export default `
       <link rel="stylesheet" href="<%= it.baseUrl %><%= stylesheet %>" />
     <% }); %>
     <% it.scripts.forEach((script) => { %>
-      <script src="<%= it.baseUrl %><%= script %>" defer></script>
+      <script type="module" src="<%= it.baseUrl %><%= script %>"></script>
+    <% }); %>
+    <% it.modulePreloads.forEach((modulePreload) => { %>
+      <link rel="modulepreload" href="<%= it.baseUrl %><%= modulePreload %>" />
     <% }); %>
   </head>
   <body <%~ it.bodyAttributes %>>

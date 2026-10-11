@@ -7,6 +7,7 @@
 
 import _ from 'lodash';
 import logger from '@docusaurus/logger';
+import {deserializeError} from './ssgRenderer';
 import type {SSGError, SSGResult, SSGSuccess} from './ssgRenderer';
 import type {SiteCollectedData} from '../common';
 
@@ -63,7 +64,9 @@ function throwSSGError(ssgErrors: SSGError[]): never {
   // Note logging this error properly require using inspect(error,{depth})
   // See https://github.com/nodejs/node/issues/51637
   throw new Error(message, {
-    cause: new AggregateError(ssgErrors.map((ssgError) => ssgError.error)),
+    cause: new AggregateError(
+      ssgErrors.map((ssgError) => deserializeError(ssgError.error)),
+    ),
   });
 }
 

@@ -6,11 +6,10 @@
  */
 
 import {Eta} from 'eta';
-import {getBundles} from 'react-loadable-ssr-addon-v5-slorber';
 import {PerfLogger} from '@docusaurus/logger';
 import type {SSGParams} from './ssgParams';
 import type {AppRenderResult} from '../common';
-import type {Manifest} from 'react-loadable-ssr-addon-v5-slorber';
+import type {ClientManifest} from '../bundler/manifest';
 
 // TODO Docusaurus v4 breaking change - this is historical server template data
 //  that does not look super clean nor typesafe
@@ -24,7 +23,10 @@ type SSGTemplateData = {
   preBodyTags: string;
   postBodyTags: string;
   metaAttributes: string[];
+  /** ES module scripts (the client entry) */
   scripts: string[];
+  /** ES modules that the page needs (route chunks) */
+  modulePreloads: string[];
   stylesheets: string[];
   noIndex: boolean;
   version: string;
@@ -42,24 +44,25 @@ export async function compileSSGTemplate(
 }
 
 /**
- * Given a list of modules that were SSR an d
- * @param modules
- * @param manifest
+ * Given the list of modules rendered for a page, returns the client assets
+ * that this page needs, based on the client manifest
  */
 function getScriptsAndStylesheets({
   modules,
   manifest,
 }: {
   modules: string[];
-  manifest: Manifest;
+  manifest: ClientManifest;
 }) {
-  // Get all required assets for this particular page
-  // based on client manifest information.
-  const modulesToBeLoaded = [...manifest.entrypoints, ...Array.from(modules)];
-  const bundles = getBundles(manifest, modulesToBeLoaded);
-  const stylesheets = (bundles.css ?? []).map((b) => b.file);
-  const scripts = (bundles.js ?? []).map((b) => b.file);
-  return {scripts, stylesheets};
+  const modulePreloads = new Set<string>();
+  modules.forEach((modulePath) => {
+    manifest.modules[modulePath]?.forEach((file) => modulePreloads.add(file));
+  });
+  return {
+    scripts: manifest.entry.js,
+    stylesheets: manifest.entry.css,
+    modulePreloads: [...modulePreloads],
+  };
 }
 
 export function renderSSGTemplate({
@@ -85,7 +88,10 @@ export function renderSSGTemplate({
     collectedData: {modules, metadata},
   } = result;
 
-  const {scripts, stylesheets} = getScriptsAndStylesheets({manifest, modules});
+  const {scripts, stylesheets, modulePreloads} = getScriptsAndStylesheets({
+    manifest,
+    modules,
+  });
 
   const {htmlAttributes, bodyAttributes} = metadata.internal;
   const metaStrings = [
@@ -106,6 +112,7 @@ export function renderSSGTemplate({
     postBodyTags,
     metaAttributes,
     scripts,
+    modulePreloads,
     stylesheets,
     noIndex,
     version: DOCUSAURUS_VERSION,
@@ -133,7 +140,7 @@ export async function renderHashRouterTemplate({
     compileSSGTemplate(ssgTemplateContent),
   );
 
-  const {scripts, stylesheets} = getScriptsAndStylesheets({
+  const {scripts, stylesheets, modulePreloads} = getScriptsAndStylesheets({
     manifest,
     modules: [],
   });
@@ -148,6 +155,7 @@ export async function renderHashRouterTemplate({
     postBodyTags,
     metaAttributes: [],
     scripts,
+    modulePreloads,
     stylesheets,
     noIndex: false,
     version: DOCUSAURUS_VERSION,

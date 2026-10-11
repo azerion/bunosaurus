@@ -6,7 +6,6 @@
  */
 
 import path from 'node:path';
-import {escapePath} from './pathUtils';
 import {
   WEBPACK_URL_LOADER_LIMIT,
   OUTPUT_STATIC_ASSETS_DIR_NAME,
@@ -67,20 +66,25 @@ function createFileLoaderUtils({
       '[name]-[contenthash].[ext]',
     );
 
+  // The Bun bundler handles these asset loaders natively and never executes
+  // them: bare loader names are enough, file-loader/url-loader are not needed
+  const fileLoader = 'file-loader';
+  const urlLoader = 'url-loader';
+
   const loaders: FileLoaderUtils['loaders'] = {
     file: (options: {folder: AssetFolder}) => ({
-      loader: require.resolve(`file-loader`),
+      loader: fileLoader,
       options: {
         name: fileLoaderFileName(options.folder),
         emitFile: !isServer,
       },
     }),
     url: (options: {folder: AssetFolder}) => ({
-      loader: require.resolve('url-loader'),
+      loader: urlLoader,
       options: {
         limit: urlLoaderLimit,
         name: fileLoaderFileName(options.folder),
-        fallback: require.resolve('file-loader'),
+        fallback: fileLoader,
         emitFile: !isServer,
       },
     }),
@@ -90,21 +94,13 @@ function createFileLoaderUtils({
     // Maybe with the ideal image plugin, all md images should be "ideal"?
     // This is used to force url-loader+file-loader on markdown images
     // https://webpack.js.org/concepts/loaders/#inline
-    inlineMarkdownImageFileLoader: `!${escapePath(
-      require.resolve('url-loader'),
-    )}?limit=${urlLoaderLimit}&name=${fileLoaderFileName(
+    inlineMarkdownImageFileLoader: `!${urlLoader}?limit=${urlLoaderLimit}&name=${fileLoaderFileName(
       'images',
-    )}&fallback=${escapePath(require.resolve('file-loader'))}${
+    )}&fallback=${fileLoader}${isServer ? `&emitFile=false` : ''}!`,
+    inlineMarkdownAssetImageFileLoader: `!${fileLoader}?name=${fileLoaderFileName('images')}${
       isServer ? `&emitFile=false` : ''
     }!`,
-    inlineMarkdownAssetImageFileLoader: `!${escapePath(
-      require.resolve('file-loader'),
-    )}?name=${fileLoaderFileName('images')}${
-      isServer ? `&emitFile=false` : ''
-    }!`,
-    inlineMarkdownLinkFileLoader: `!${escapePath(
-      require.resolve('file-loader'),
-    )}?name=${fileLoaderFileName('files')}${
+    inlineMarkdownLinkFileLoader: `!${fileLoader}?name=${fileLoaderFileName('files')}${
       isServer ? `&emitFile=false` : ''
     }!`,
   };

@@ -277,22 +277,29 @@ const VCS_CONFIG_SCHEMA = Joi.custom((input) => {
   return value;
 }).default(() => DEFAULT_CONFIG.vcs);
 
+// Docusaurus v3 future flags are now the default behavior (Bun bundler, SWC-free
+// pipeline, CSS cascade layers): accept them so v3 sites keep working, but
+// warn and strip them from the normalized config.
+function legacyFutureFlag(name: string) {
+  return Joi.any()
+    .custom((value: unknown) => {
+      logger.warn`The Docusaurus config code=${`future.${name}`} is obsolete and ignored: it is now the default behavior. You can remove it.`;
+      return value;
+    })
+    .strip();
+}
+
 const FUTURE_CONFIG_SCHEMA = Joi.object<
   FutureConfig & {
     experimental_storage: never;
     experimental_faster: never;
     faster: never;
+    v4: never;
   }
 >({
-  faster: Joi.any()
-    .forbidden()
-    .messages({
-      'any.unknown': `The Docusaurus config ${logger.code(
-        'future.faster',
-      )} has been removed. Docusaurus now uses Rspack by default. To keep using Webpack and Babel (deprecated), use ${logger.code(
-        'siteConfig.webpack: true',
-      )}.`,
-    }),
+  faster: legacyFutureFlag('faster'),
+  experimental_faster: legacyFutureFlag('experimental_faster'),
+  v4: legacyFutureFlag('v4'),
   experimental_router: Joi.string()
     .equal('browser', 'hash')
     .default(DEFAULT_FUTURE_CONFIG.experimental_router),
@@ -304,15 +311,6 @@ const FUTURE_CONFIG_SCHEMA = Joi.object<
       )} has been promoted to a stable top-level ${logger.code(
         'storage',
       )} config attribute. Please move your storage config to the top level.`,
-    }),
-  experimental_faster: Joi.any()
-    .forbidden()
-    .messages({
-      'any.unknown': `The Docusaurus config ${logger.code(
-        'future.experimental_faster',
-      )} has been removed. Docusaurus now uses Rspack by default. To keep using Webpack and Babel (deprecated), use ${logger.code(
-        'siteConfig.webpack: true',
-      )}.`,
     }),
 })
   .optional()

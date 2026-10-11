@@ -308,27 +308,38 @@ ${indent(routeConfigSerialized)},
   return res;
 }
 
-const genRegistry = ({
+const genRegistry = async ({
   generatedFilesDir,
   registry,
 }: {
   generatedFilesDir: string;
   registry: RoutesCode['registry'];
-}) =>
-  generate(
-    generatedFilesDir,
-    'registry.js',
-    `export default {
-${Object.entries(registry)
-  .sort((a, b) => a[0].localeCompare(b[0]))
+}) => {
+  const entries = Object.entries(registry).sort((a, b) =>
+    a[0].localeCompare(b[0]),
+  );
+  await Promise.all([
+    generate(
+      generatedFilesDir,
+      'registry.js',
+      `export default {
+${entries
   .map(
     ([chunkName, modulePath]) =>
       // modulePath is already escaped by escapePath
-      `  "${chunkName}": [() => import(/* webpackChunkName: "${chunkName}" */ "${modulePath}"), "${modulePath}", require.resolveWeak("${modulePath}")],`,
+      `  "${chunkName}": [() => import("${modulePath}"), "${modulePath}"],`,
   )
   .join('\n')}};
 `,
-  );
+    ),
+    // Used by the bundler to build the client chunk map (prefetching)
+    generate(
+      generatedFilesDir,
+      'registry.json',
+      JSON.stringify(Object.fromEntries(entries), null, 2),
+    ),
+  ]);
+};
 
 const genRoutesChunkNames = ({
   generatedFilesDir,

@@ -55,7 +55,7 @@ jobs:
 
       # Deploy to https://facebook.github.io/docusaurus/
       - name: Deploy to GitHub Pages
-        if: ${{ github.event_name != 'pull_request' && github.ref_name == 'main' }}
+        if: ${{ github.repository == 'facebook/docusaurus' && github.event_name != 'pull_request' && github.ref_name == 'main' }}
         uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4.1.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}

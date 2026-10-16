@@ -85,6 +85,14 @@ When a test fails, run only that file until it passes, then run the full suite a
 
 For bundler-dependent changes, also build a real site: `bun admin/scripts/packForSite.ts <dist-dir> <site>`. You can compare it with a previous build using `admin/bench/compareHtml.ts`.
 
+### Gotchas
+
+- `tsc` doesn't delete the outputs of deleted source files. When upstream deletes or renames source files, delete the `lib/` folders of the affected packages before `bun run build:packages`. Otherwise stale modules stay in the build: for example, the theme-translations test finds messages from a deleted theme component.
+- Code that rewrites JS/MDX sources (as the Bun plugin does for text imports and `new URL()`) must skip string literals. MDX compiles code blocks to strings, and the docs often show the syntax being rewritten.
+- The `strip-hash` pattern in `build-perf.yml` must match Bun's 8-char chunk hashes, not Webpack's.
+- On some Linux filesystems, `readdir` returns files in creation order. Tests that depend on glob order, such as same-date blog posts, fail when the merge rewrites their fixtures. They also fail in a fresh checkout. Run the failing tests on the pre-merge commit, in a fresh `git worktree`, before blaming the merge.
+- `bun install` adds local, gitignored workspaces (`bench-sites/*`) to `bun.lock`. Make sure they don't end up in the committed lockfile, because CI runs `bun install --frozen-lockfile` without them.
+
 ## 6. Commit
 
 Update `BUNOSAURUS.md` when user-facing behavior changed: new breaking changes or features the fork doesn't support. New `packages/*` are published automatically under `@azerion/bunosaurus-*` (`admin/scripts/publishedPackages.ts`). Check that's what you want.

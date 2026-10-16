@@ -91,7 +91,7 @@ For bundler-dependent changes, also build a real site: `bun admin/scripts/packFo
 - Code that rewrites JS/MDX sources (as the Bun plugin does for text imports and `new URL()`) must skip string literals. MDX compiles code blocks to strings, and the docs often show the syntax being rewritten.
 - The `strip-hash` pattern in `build-perf.yml` must match Bun's 8-char chunk hashes, not Webpack's.
 - On some Linux filesystems, `readdir` returns files in creation order. Tests that depend on glob order, such as same-date blog posts, fail when the merge rewrites their fixtures. They also fail in a fresh checkout. Run the failing tests on the pre-merge commit, in a fresh `git worktree`, before blaming the merge.
-- `bun install` adds local, gitignored workspaces (`bench-sites/*`) to `bun.lock`. Make sure they don't end up in the committed lockfile, because CI runs `bun install --frozen-lockfile` without them.
+- Local benchmark sites (`bench-sites/`, gitignored) are not workspaces, so `bun install` keeps them out of `bun.lock`. Test them with the packed packages: `bun admin/scripts/packForSite.ts <dist-dir> <site>`. Never add them back to the root `workspaces`: CI runs `bun install --frozen-lockfile` without them.
 
 ## 6. Commit
 

@@ -75,7 +75,7 @@ bun admin/scripts/packForSite.ts /path/to/dist-packages /path/to/site
 
 ## Benchmarks
 
-Site: [BlueStack developer docs](https://developers.bluestack.app) (~415 Markdown files, 9 docs plugin instances, 2 blogs, `en` + `fr`, 1208 pages).
+Site: [Improve Digital Yield docs](https://docs.app.improvedigital.com) (~415 Markdown files, 9 docs plugin instances, 2 blogs, `en` + `fr`, 1208 pages).
 
 Baseline: Docusaurus 3.10 with `future.faster` (Rspack, SWC, LightningCSS) on Node.js 24. Machine: AMD Ryzen AI 9 HX 370 laptop (power-limited, 12 cores). Builds interleaved, 4 runs each, median.
 

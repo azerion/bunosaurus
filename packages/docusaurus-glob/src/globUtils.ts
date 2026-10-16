@@ -20,13 +20,40 @@ export type GlobOptions = Pick<
   'cwd' | 'ignore' | 'absolute'
 >;
 
-/** Finds the files matching the given glob patterns. */
+/**
+ * Compares file paths like the tinyglobby crawl order: the files of a
+ * directory come before its subdirectories, names are compared alphabetically.
+ */
+function compareFilePaths(a: string, b: string): number {
+  if (a === b) {
+    return 0;
+  }
+  const aSegments = a.split('/');
+  const bSegments = b.split('/');
+  let i = 0;
+  while (aSegments[i] === bSegments[i]) {
+    i += 1;
+  }
+  const aIsFile = i === aSegments.length - 1;
+  const bIsFile = i === bSegments.length - 1;
+  if (aIsFile !== bIsFile) {
+    return aIsFile ? -1 : 1;
+  }
+  return aSegments[i]! < bSegments[i]! ? -1 : 1;
+}
+
+/**
+ * Finds the files matching the given glob patterns, in a stable order: the
+ * file system order (creation order on some file systems) must not leak into
+ * the output, e.g. the order of blog posts with the same date.
+ */
 export async function glob(
   patterns: string | string[],
   options?: GlobOptions,
 ): Promise<string[]> {
   // Other lib options are still forwarded at runtime for retro-compatibility
-  return Tinyglobby.glob(patterns, {...options});
+  const files = await Tinyglobby.glob(patterns, {...options});
+  return files.sort(compareFilePaths);
 }
 
 /**

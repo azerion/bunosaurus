@@ -10,8 +10,7 @@
     "packages/create-docusaurus/templates/*",
     "admin/scripts",
     "admin/test-bad-package",
-    "admin/new.docusaurus.io",
-    "bench-sites/*"
+    "admin/new.docusaurus.io"
   ],
   "scripts": {
     "start": "bun run build:packages && bun run start:website",

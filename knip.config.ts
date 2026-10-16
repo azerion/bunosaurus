@@ -23,8 +23,6 @@ function themePackageConfig({
 
 const config: KnipConfig = {
   ignore: ['**/__fixtures__/**'],
-  // Local benchmark sites (gitignored)
-  ignoreWorkspaces: ['bench-sites/*'],
   ignoreDependencies: [
     // Docusaurus client API aliases, see packages/docusaurus/src/client/exports
     // Plugins and themes depend on @docusaurus/core for these aliases

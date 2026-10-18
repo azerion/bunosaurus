@@ -173,7 +173,12 @@ export async function writeDevBuildOutput({
   );
   if (!entryPath) {
     throw new Error(
-      `Docusaurus Bug: client entry output not found in Bun metafile for ${clientEntryPath}`,
+      `Docusaurus Bug: client entry output not found in Bun metafile for ${clientEntryPath}. Metafile entry points: ${[
+        ...metaOutputs.values(),
+      ]
+        .map((metaOutput) => metaOutput.entryPoint)
+        .filter(Boolean)
+        .join(', ')}`,
     );
   }
   if (cssPath) {

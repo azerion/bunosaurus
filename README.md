@@ -8,7 +8,7 @@ bun create @azerion/bunosaurus my-website classic
 
 ## Performance
 
-[BlueStack developer docs](https://developers.bluestack.app): ~415 Markdown files, 9 docs plugin instances, 2 blogs, 2 locales, 1208 pages. Baseline: Docusaurus 3.10 with `future.faster` (Rspack, SWC, LightningCSS) on Node.js 24. Median of 4 interleaved runs on an AMD Ryzen AI 9 HX 370 laptop.
+[Improve Digital Yield docs](https://docs.app.improvedigital.com): ~415 Markdown files, 9 docs plugin instances, 2 blogs, 2 locales, 1208 pages. Baseline: Docusaurus 3.10 with `future.faster` (Rspack, SWC, LightningCSS) on Node.js 24. Median of 4 interleaved runs on an AMD Ryzen AI 9 HX 370 laptop.
 
 |  | Docusaurus 3.10 (Rspack) | Bunosaurus |  |
 | --- | --- | --- | --- |

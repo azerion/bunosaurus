@@ -197,8 +197,8 @@ describe('loadThemeAliases', () => {
     const alias = await loadThemeAliases({
       siteDir: fixtures,
       plugins: [
-        {getThemePath: () => theme1Path},
-        {getThemePath: () => theme2Path},
+        {path: fixtures, getThemePath: () => theme1Path},
+        {path: fixtures, getThemePath: () => theme2Path},
       ] as LoadedPlugin[],
     });
 

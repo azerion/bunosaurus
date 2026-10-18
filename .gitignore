@@ -57,3 +57,6 @@ website/profile.json.gz
 .codex
 
 /bench-sites/
+
+# Temp dirs of interrupted tests
+.tmp-hot-update-test-*

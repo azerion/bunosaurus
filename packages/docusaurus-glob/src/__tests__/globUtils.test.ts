@@ -6,11 +6,38 @@
  */
 
 import {describe, expect, it} from 'vitest';
+import os from 'node:os';
+import path from 'node:path';
+import fs from 'node:fs/promises';
 import {
   GlobExcludeDefault,
   createMatcher,
   createAbsoluteFilePathMatcher,
+  glob,
 } from '../globUtils';
+
+describe('glob', () => {
+  it('returns files in a stable order, whatever their creation order', async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'glob-test-'));
+    try {
+      // Created out of order: some file systems list files in creation order
+      for (const file of ['b/z.md', 'c.md', 'b/a.md', 'a/b.md', 'a.md']) {
+        await fs.mkdir(path.dirname(path.join(dir, file)), {recursive: true});
+        await fs.writeFile(path.join(dir, file), '');
+      }
+      // Files of a directory before its subdirectories, like tinyglobby
+      await expect(glob('**/*.md', {cwd: dir})).resolves.toEqual([
+        'a.md',
+        'c.md',
+        'a/b.md',
+        'b/a.md',
+        'b/z.md',
+      ]);
+    } finally {
+      await fs.rm(dir, {recursive: true, force: true});
+    }
+  });
+});
 
 describe('createMatcher', () => {
   it('match default exclude MD/MDX partials correctly', () => {

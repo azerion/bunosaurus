@@ -55,15 +55,15 @@ jobs:
       - name: TypeCheck website - min version - v6.0
         # We call the "typescript" package compiler explicitly, because the
         # root "tsc" bin comes from "@typescript/native" (pinned TS 7)
+        # bunx: "bun add" keeps node_modules/typescript linked to the root
+        # "typescript" alias (@typescript/typescript6), which has no bin/tsc
         run: |
-          bun add -d --exact typescript@6.0 --ignore-scripts
-          bun node_modules/typescript/bin/tsc --version
-          bun node_modules/typescript/bin/tsc --project website/tsconfig.json
+          bunx --package typescript@6.0 tsc --version
+          bunx --package typescript@6.0 tsc --project website/tsconfig.json
 
       - name: TypeCheck website - max version - Latest
         # For latest TS there are often lib check errors, so we disable it
         # Details: https://github.com/facebook/docusaurus/pull/10486
         run: |
-          bun add -d --exact typescript@latest --ignore-scripts
-          bun node_modules/typescript/bin/tsc --version
-          bun node_modules/typescript/bin/tsc --project website/tsconfig.skipLibCheck.json
+          bunx --package typescript@latest tsc --version
+          bunx --package typescript@latest tsc --project website/tsconfig.skipLibCheck.json

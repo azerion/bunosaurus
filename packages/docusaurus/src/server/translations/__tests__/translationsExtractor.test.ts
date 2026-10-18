@@ -52,6 +52,7 @@ export default function MySiteComponent1() {
       // @ts-expect-error: good enough for this test
       return {
         name: 'abc',
+        path: pluginDir,
         getPathsToWatch() {
           return [path.join(pluginDir, 'subpath', '**/*.{js,jsx,ts,tsx}')];
         },

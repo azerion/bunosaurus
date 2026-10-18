@@ -53,7 +53,8 @@ const EXPECTED_CSS_MARKERS = [
   // '.DocSearch-Hit-content-wrapper',
 ];
 
-const cssDirName = fileURLToPath(new URL('build/assets/css', import.meta.url));
+// The Bun bundler emits the CSS bundle next to the JS entry it belongs to
+const cssDirName = fileURLToPath(new URL('build/assets/js', import.meta.url));
 
 const cssFileNames = (await fs.readdir(cssDirName)).filter((file) =>
   file.endsWith('.css'),

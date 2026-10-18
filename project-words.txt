@@ -27,7 +27,9 @@ Bhatt
 blockquotes
 Bokmål
 bunfig
+BUNOSAURUS
 Bunosaurus
+bunosaurus
 bunx
 BYOLLM
 caabernathy
@@ -206,8 +208,6 @@ paraiso
 pathinfo
 paularmstrong
 pcss
-pftrace
-Pipeable
 playbtn
 Plushie
 plushie
@@ -249,14 +249,12 @@ rmiz
 RSDOCTOR
 Rsdoctor
 rsdoctor
-RSPACK
 Rspack
 rspack
 Rspress
 rtcts
 runneradmin
 Ryzen
-Samply
 samply
 saurus
 Sebastien
@@ -274,7 +272,6 @@ Simen
 slorber
 sluggifies
 sluggify
-Smoosh
 Solana
 solana
 someexpression
@@ -306,7 +303,6 @@ Teik
 Therox
 thisweekinreact
 toplevel
-toposort
 Transifex
 transpiles
 Treeified
@@ -344,11 +340,8 @@ vjeux
 voir
 waivable
 webfactory
-webpackbar
 webstorm
 Wolcott
-Worktree
-worktree
 Xplorer
 XSOAR
 Yacop

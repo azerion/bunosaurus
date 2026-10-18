@@ -10,7 +10,9 @@ import fs from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {logger} from '@docusaurus/logger';
 
-import classicTheme from '@docusaurus/theme-classic';
+// Named import: Bun's default import of an __esModule CJS module is its
+// "default" export, not module.exports
+import {getSwizzleConfig} from '@docusaurus/theme-classic';
 
 // Unsafe imports
 import {
@@ -20,7 +22,7 @@ import {
 import {normalizeSwizzleConfig} from '@docusaurus/core/lib/commands/swizzle/config.js';
 import {wrap, eject} from '@docusaurus/core/lib/commands/swizzle/actions.js';
 
-const swizzleConfig = normalizeSwizzleConfig(classicTheme.getSwizzleConfig());
+const swizzleConfig = normalizeSwizzleConfig(getSwizzleConfig());
 
 /** @type {"eject" | "wrap"} */
 const action = process.env.SWIZZLE_ACTION ?? 'eject';

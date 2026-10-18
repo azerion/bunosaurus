@@ -32,7 +32,7 @@ done
 shift $((OPTIND-1))
 
 
-if [ ! -z $EXTRA_OPTS ]
+if [ -n "$EXTRA_OPTS" ]
 then
   echo create-docusaurus extra options = ${EXTRA_OPTS}
 fi

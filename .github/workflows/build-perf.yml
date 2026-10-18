@@ -33,6 +33,10 @@ jobs:
       contents: read # for actions/checkout to fetch code
       issues: write # for preactjs/compressed-size-action to create comments
       pull-requests: write # for preactjs/compressed-size-action to write a PR review
+    # ⚠️ No GitHub Actions cache on purpose, enforced by GitHub for every step
+    # This job can write to pull requests, issues and checks
+    # See https://docs.github.com/actions/reference/workflows-and-actions/workflow-syntax#cache-mode
+    cache-mode: none
     name: Build Size Report
     timeout-minutes: 30
     runs-on: ubuntu-latest
@@ -54,6 +58,7 @@ jobs:
           pattern: '{website/build/assets/js/main*js,website/build/assets/js/main*css,website/.docusaurus/globalData.json,website/.docusaurus/registry.js,website/.docusaurus/routes.js,website/.docusaurus/routesChunkNames.json,website/.docusaurus/site-metadata.json,website/.docusaurus/codeTranslations.json,website/.docusaurus/i18n.json,website/.docusaurus/docusaurus.config.mjs,website/build/index.html,website/build/docs.html,website/build/docs/**/*.html,website/build/blog.html,website/build/blog/**/*.html}'
           # HTML files: exclude versioned docs pages, tags pages, html redirect files
           exclude: '{website/build/docs/?.?.?/**/*.html,website/build/docs/next/**/*.html,website/build/blog/tags/**/*.html,**/*.html.html}'
+          # Bun chunk hashes are 8 chars long
           strip-hash: '\.([^;]\w{7})\.'
           minimum-change-threshold: 30
           compression: none

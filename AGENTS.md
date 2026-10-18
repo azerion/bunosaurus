@@ -53,7 +53,7 @@ The main CLI commands available
 - `bun run build:packages` - Build all monorepo packages
 - `bun run watch` - Incremental build of monorepo packages with file watchers
 - `bun run format` - Format code with oxfmt
-- `bun run lint` - Run linting (ESLint + Stylelint + spell check + Knip)
+- `bun run lint` - Run all the lint checks that CI runs (ESLint + Stylelint + spell check + Syncpack + lockfile check + Knip + formatting check)
 - `bun run test` - Run all tests using Vitest (on the Bun runtime)
 - `bun run clear` - Clean all build artifacts and caches
 - `bun run --filter <package-name> build` - Build an individual monorepo package
@@ -79,12 +79,22 @@ Update Vitest failing snapshots with the `-u` option. Do not blindly update snap
 ### Linting & Formatting
 
 - `bun run format` - Format code with oxfmt
+- `bun run format:diff` - Check that all files are formatted with oxfmt
+- `bun run lint` - Run all the lint checks below, the same ones CI runs
 - `bun run lint:js` - ESLint for JS/TS files
 - `bun run lint:style` - Stylelint for CSS files
 - `bun run lint:spelling` - CSpell for spell checking
+- `bun run lint:syncpack` - Syncpack to check consistent dependency versions across packages
 - `bun run lint:knip` - Knip to find unused files, exports and dependencies (config in `knip.config.ts`)
 - `bun run lint:deps` - Check that `bun.lock` is up to date
 - Add `:fix` suffix to auto-fix issues (e.g., `bun run lint:js:fix`)
+
+## Skills
+
+Task-specific instructions live in skills, following the [Agent Skills](https://agentskills.io) format. Read the matching `SKILL.md` before starting one of these tasks:
+
+- [`pull-requests`](.agents/skills/pull-requests/SKILL.md) - Create, update, check the CI of, or merge a PR (maintainers only)
+- [`upstream-sync`](.agents/skills/upstream-sync/SKILL.md) - Back-merge upstream Docusaurus into Bunosaurus, keeping the fork Bun-only
 
 ## Contributing, Issue and PR Guidelines
 
@@ -93,22 +103,14 @@ Docusaurus maintainers work locally with and env variable `DOCUSAURUS_MAINTAINER
 ### General rules
 
 - Always disclose the usage of AI in any communication (commits, PR, comments, issues, etc.) by adding an `(AI-assisted)` text to all messages.
-- When opening a PR, follow the GitHub pull request template in `.github/PULL_REQUEST_TEMPLATE.md`, preserving its sections and checklist. Be concise.
-- If there are breaking changes, add a `## Breaking Changes` section at the very top. Link to the version release notes or blog posts containing the breaking changes, and summarize the most impactful ones in the PR. Inline upgrade instructions if reasonably small to document.
 
 ### For Docusaurus maintainers
 
 They are allowed to bypass these `AGENTS.md` rules if asked explicitly.
 
-They can create pull-requests. After creating a PR, update the deploy preview link in its description with the assigned PR number: `https://deploy-preview-<PR-NUMBER>--docusaurus-2.netlify.app/`. Include links to relevant preview pages in the template's Test links section so that reviewers can easily find
+They can create pull-requests. Before creating, updating, checking the CI of, or merging a PR, read the [`pull-requests` skill](.agents/skills/pull-requests/SKILL.md).
 
-### Git
-
-Rules for merging pull requests (maintainers only):
-
-- Never use auto-merge, including `gh pr merge --auto`. The repository doesn't use auto-merge, and `--auto` merges immediately when the PR is already mergeable.
-- If CI checks are still running, wait for all of them to finish before merging.
-- If any CI check fails, report the failure and do not merge.
+Never use auto-merge (`gh pr merge --auto`), and never merge a PR before its CI checks are finished and green. The skill documents the only known exception.
 
 ### For all others (non-maintainers)
 

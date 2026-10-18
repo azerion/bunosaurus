@@ -6,6 +6,7 @@
  */
 
 import {describe, expect, it} from 'vitest';
+import {findAssetRule, getAssetRuleUtils} from '@docusaurus/utils';
 import {matchCondition} from '../conditions';
 import {
   BundlerInstanceShim,
@@ -118,5 +119,59 @@ describe('resolveRuleLoaders', () => {
       'svgr-loader',
     ]);
     expect(loaders('/site/logo.svg', '/site/src/styles.css')).toEqual([]);
+  });
+});
+
+describe('resolveRuleLoaders with the Docusaurus asset rules', () => {
+  // The built-in asset rules, wrapped like the SVGR and ideal-image plugins do
+  const config = {module: {rules: [getAssetRuleUtils(false).rules.assets()]}};
+  function wrapAssetRule(test: RegExp, use: string) {
+    const {parentRules, rule} = findAssetRule({
+      rules: config.module.rules,
+      test,
+    })!;
+    parentRules[parentRules.indexOf(rule)] = {
+      test: rule.test,
+      with: {type: {not: 'text'}},
+      oneOf: [
+        {
+          type: 'javascript/auto',
+          dependency: {not: 'url'},
+          issuer: {and: [/\.(?:tsx?|jsx?|mdx?)$/i]},
+          use: [use],
+        },
+        rule,
+      ],
+    };
+  }
+  wrapAssetRule(/\.svg$/i, 'svgr-loader');
+  wrapAssetRule(/\.(?:ico|jpe?g|png|gif|webp|avif)$/i, 'ideal-image-loader');
+  const {rules} = interpretWebpackConfig(config);
+
+  function loaders(resourcePath: string, issuer: string, query = '') {
+    return resolveRuleLoaders({
+      rules,
+      resourcePath,
+      resourceQuery: query,
+      issuer,
+    }).map((l) => l.loader);
+  }
+
+  it('applies plugin loaders to JS imports only', () => {
+    expect(loaders('/site/logo.svg', '/site/src/Page.tsx')).toEqual([
+      'svgr-loader',
+    ]);
+    expect(loaders('/site/img.png', '/site/docs/doc.mdx')).toEqual([
+      'ideal-image-loader',
+    ]);
+    expect(loaders('/site/logo.svg', '/site/src/styles.css')).toEqual([]);
+    expect(loaders('/site/img.png', '/site/src/styles.css')).toEqual([]);
+    expect(loaders('/site/font.woff2', '/site/src/Page.tsx')).toEqual([]);
+  });
+
+  it('does not apply plugin loaders to asset requests', () => {
+    expect(
+      loaders('/site/img.png', '/site/docs/doc.mdx', '?docusaurus-asset=image'),
+    ).toEqual([]);
   });
 });

@@ -15,7 +15,7 @@ import {
   interpretWebpackConfig,
   type BundlerContributions,
 } from '@docusaurus/bundler';
-import {getFileLoaderUtils} from '@docusaurus/utils';
+import {getAssetRuleUtils} from '@docusaurus/utils';
 import type {
   ConfigureWebpackUtils,
   CurrentBundler,
@@ -40,7 +40,8 @@ const configureWebpackUtils: ConfigureWebpackUtils = {
 
 /**
  * The initial config passed to configureWebpack(), containing the Docusaurus
- * core asset rules: some plugins (SVGR) look them up to enhance them.
+ * core asset rules: some plugins (SVGR, ideal-image) look them up with
+ * findAssetRule() to wrap them.
  */
 function createVirtualConfig({
   isServer,
@@ -49,20 +50,14 @@ function createVirtualConfig({
   isServer: boolean;
   publicPath: string;
 }): Configuration {
-  const {rules} = getFileLoaderUtils(isServer);
+  const {rules} = getAssetRuleUtils(isServer);
   return {
     name: isServer ? 'server' : 'client',
     output: {publicPath},
     mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
     resolve: {alias: {}},
     module: {
-      rules: [
-        rules.images(),
-        rules.svgs(),
-        rules.fonts(),
-        rules.media(),
-        rules.otherAssets(),
-      ],
+      rules: [rules.assets()],
     },
     plugins: [],
   };

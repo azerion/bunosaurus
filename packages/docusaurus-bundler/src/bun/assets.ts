@@ -10,8 +10,8 @@ import {fs} from '@docusaurus/fs';
 
 export type AssetFolder = 'images' | 'files' | 'fonts' | 'medias';
 
-// Same extensions as the historical Docusaurus file-loader rules
-// See @docusaurus/utils getFileLoaderUtils()
+// Same extensions as the Docusaurus asset rules
+// See @docusaurus/utils getAssetRuleUtils()
 const AssetFolderTests: [AssetFolder, RegExp][] = [
   ['images', /\.(?:ico|jpe?g|png|gif|webp|avif|svg)$/i],
   ['fonts', /\.(?:woff2?|eot|ttf|otf)$/i],
@@ -61,11 +61,16 @@ export class AssetEmitter {
     this.options = options;
   }
 
+  /**
+   * @param folder overrides the folder inferred from the file extension, e.g.
+   * a PNG linked from Markdown is emitted as a file, not an image
+   */
   getAsset(source: string, folder?: AssetFolder): Promise<EmittedAsset> {
-    let asset = this.assets.get(source);
+    const key = folder ? `${folder}:${source}` : source;
+    let asset = this.assets.get(key);
     if (!asset) {
       asset = this.createAsset(source, folder);
-      this.assets.set(source, asset);
+      this.assets.set(key, asset);
     }
     return asset;
   }

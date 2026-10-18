@@ -30,10 +30,25 @@ jobs:
       - name: Check immutable bun.lock
         run: git diff --exit-code
 
-      - name: Lint
-        run: |
-          echo "::add-matcher::.github/workflows/cspell-problem-matcher.json"
-          bun run lint:ci
+      - name: Add CSpell problem matcher
+        run: echo "::add-matcher::.github/workflows/cspell-problem-matcher.json"
 
-      - name: Check Formatting
-        run: bun run format:diff
+      # Independent read-only checks: run them concurrently
+      # A failing check doesn't hide the results of the other ones
+      # Keep in sync with the "lint" script of package.json
+      # See https://github.blog/changelog/2026-06-25-actions-steps-can-now-be-run-in-parallel/
+      - parallel:
+          - name: ESLint
+            run: bun run lint:js --quiet
+          - name: Stylelint
+            run: bun run lint:style
+          - name: Spelling
+            run: bun run lint:spelling
+          - name: Syncpack
+            run: bun run lint:syncpack
+          - name: Check bun.lock is up to date
+            run: bun run lint:deps
+          - name: Knip
+            run: bun run lint:knip
+          - name: Check Formatting
+            run: bun run format:diff

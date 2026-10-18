@@ -564,13 +564,6 @@ export default async function createConfigAsync() {
               : // Note: /tests/docs already has noIndex: true
                 ['/tests/{blog,pages}/**'],
             lastmod: showLastUpdate ? 'date' : null,
-            priority: null,
-            changefreq: null,
-          },
-          svgr: {
-            svgrConfig: {
-              svgoConfig: undefined, // Use .svgo.config.js
-            },
           },
         } satisfies Preset.Options,
       ],

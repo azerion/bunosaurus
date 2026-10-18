@@ -14,7 +14,8 @@ import {
   type CompatRule,
   type ContextReplacement,
 } from './webpackCompat';
-import {isAssetPath, type AssetEmitter} from './assets';
+import {isAssetPath, type AssetEmitter, type AssetFolder} from './assets';
+import {replaceNewURLs} from './newURL';
 import type {LoaderCache} from './loaderCache';
 import type {BunPlugin, OnResolveArgs, OnResolveResult} from 'bun';
 import type {AcceptedPlugin} from 'postcss';
@@ -63,6 +64,32 @@ function rewriteTextImports(code: string): string {
   );
 }
 const ChainParam = '__docusaurus_chain';
+
+// Query param of asset requests created with createAssetRequest()
+// (@docusaurus/utils): "!./img.png?docusaurus-asset=image"
+const AssetRequestParam = 'docusaurus-asset';
+// Internal asset request type for new URL('./img.png', import.meta.url)
+const URLAssetRequestType = 'url';
+// Our asset namespace paths keep a folder override in a query param
+const AssetFolderParam = 'docusaurus-asset-folder';
+
+function getAssetRequestFolder(resourceQuery: string): AssetFolder | undefined {
+  const type = new URLSearchParams(resourceQuery.slice(1)).get(
+    AssetRequestParam,
+  );
+  switch (type) {
+    case 'image':
+    case 'image-file':
+      return 'images';
+    case 'file':
+      return 'files';
+    default:
+      return undefined;
+  }
+}
+
+// Webpack-like RelativeURL constructor, see relativeURL.ts
+const RelativeURLModulePath = require.resolve('./relativeURL');
 
 export type DocusaurusBunPluginOptions = {
   isServer: boolean;
@@ -226,13 +253,48 @@ export function createDocusaurusBunPlugin(
   async function resolveAsset(
     filePath: string,
     importer: string,
+    folder?: AssetFolder,
   ): Promise<OnResolveResult> {
     // CSS files reference assets by URL: emit and externalize them
     if (CSSRegExp.test(importer)) {
-      const asset = await assetEmitter.getAsset(filePath);
+      const asset = await assetEmitter.getAsset(filePath, folder);
       return {path: asset.cssUrl, external: true};
     }
-    return {path: filePath, namespace: AssetNamespace};
+    return {
+      path: folder ? `${filePath}?${AssetFolderParam}=${folder}` : filePath,
+      namespace: AssetNamespace,
+    };
+  }
+
+  /**
+   * Bun doesn't handle new URL('./img.png', import.meta.url): we turn it into
+   * a request for the asset URL, like Webpack with "javascript.url: relative".
+   * The "!" prefix skips the module rules: assets referenced this way are never
+   * transformed by plugins (SVGR, ideal-image...).
+   */
+  function rewriteNewURLs(code: string): string {
+    return replaceNewURLs(code, (request) => {
+      // Absolute URLs (https:, data:...) are not assets
+      if (/^(?:[a-z][a-z\d+.-]*:|\/\/|#)/i.test(request)) {
+        return undefined;
+      }
+      // URL semantics: "img.png" is relative, unless it's an alias
+      const [requestPath, requestQuery] = splitQuery(request);
+      const relativeRequest =
+        isPathRequest(requestPath) || applyAlias(requestPath) !== undefined
+          ? requestPath
+          : `./${requestPath}`;
+      const query = `${requestQuery ? `${requestQuery}&` : '?'}${AssetRequestParam}=${URLAssetRequestType}`;
+      return `new (require(${JSON.stringify(
+        RelativeURLModulePath,
+      )}).RelativeURL)(require(${JSON.stringify(
+        `!${relativeRequest}${query}`,
+      )}))`;
+    });
+  }
+
+  function rewriteSourceCode(code: string): string {
+    return rewriteNewURLs(rewriteTextImports(code));
   }
 
   async function resolveInlineLoaders(
@@ -260,7 +322,11 @@ export function createDocusaurusBunPlugin(
     }
     const customLoaders = loaders.filter((l) => !isAssetLoader(l.loader));
     if (customLoaders.length === 0) {
-      return resolveAsset(filePath, importer);
+      return resolveAsset(
+        filePath,
+        importer,
+        getAssetRequestFolder(resourceQuery),
+      );
     }
     return toLoaderResult(filePath, resourceQuery, customLoaders);
   }
@@ -452,24 +518,22 @@ export function createDocusaurusBunPlugin(
           : (await run()).contents;
         const isCSS = CSSRegExp.test(resourcePath);
         return {
-          contents: isCSS ? contents : rewriteTextImports(contents),
+          contents: isCSS ? contents : rewriteSourceCode(contents),
           loader: isCSS ? 'css' : 'jsx',
         };
       });
 
-      // Text import attributes in site source files (not in node_modules)
+      // Text import attributes and new URL() assets in site source files
+      // (not in node_modules)
       build.onLoad(
         {filter: /^(?!.*[\\/]node_modules[\\/]).*\.[cm]?[jt]sx?$/},
         async (args) => {
           const code = await Bun.file(args.path).text();
-          if (!TextImportRegExp.test(code)) {
+          const contents = rewriteSourceCode(code);
+          if (contents === code) {
             return undefined;
           }
-          TextImportRegExp.lastIndex = 0;
-          return {
-            contents: rewriteTextImports(code),
-            loader: getJSLoader(args.path),
-          };
+          return {contents, loader: getJSLoader(args.path)};
         },
       );
 
@@ -481,9 +545,18 @@ export function createDocusaurusBunPlugin(
       }));
 
       build.onLoad({filter: /.*/, namespace: AssetNamespace}, async (args) => {
-        const asset = await assetEmitter.getAsset(args.path);
+        const [assetPath, query] = splitQuery(args.path);
+        const folder = new URLSearchParams(query.slice(1)).get(
+          AssetFolderParam,
+        ) as AssetFolder | null;
+        const asset = await assetEmitter.getAsset(
+          assetPath,
+          folder ?? undefined,
+        );
+        // Like Webpack asset modules: require() returns the URL string, and
+        // the default import is the URL string too
         return {
-          contents: `export default ${JSON.stringify(asset.url)};`,
+          contents: `module.exports = ${JSON.stringify(asset.url)};`,
           loader: 'js',
         };
       });

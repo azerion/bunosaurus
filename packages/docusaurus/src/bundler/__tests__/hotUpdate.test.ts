@@ -6,8 +6,6 @@
  */
 
 import {afterAll, describe, expect, it} from 'vitest';
-import os from 'node:os';
-import {realpathSync} from 'node:fs';
 import path from 'node:path';
 import {fs} from '@docusaurus/fs';
 import {
@@ -159,12 +157,9 @@ describe('computeHotUpdate', () => {
 });
 
 describe('writeDevBuildOutput', () => {
-  // Real path: on Windows, os.tmpdir() can be a short 8.3 path (RUNNER~1)
-  // while the Bun metafile contains long paths
-  const tmpDir = path.join(
-    realpathSync.native(os.tmpdir()),
-    `docusaurus-hot-update-test-${process.pid}`,
-  );
+  // Not in os.tmpdir(): Bun metafile paths are relative to the cwd, they
+  // can't point to another drive (Windows CI: repo on D:, temp dir on C:)
+  const tmpDir = path.join(__dirname, `.tmp-hot-update-test-${process.pid}`);
   afterAll(() => fs.rm(tmpDir, {recursive: true, force: true}));
 
   async function build(routeAContent: string) {

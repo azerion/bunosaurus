@@ -67,11 +67,11 @@
     },
     "admin/new.docusaurus.io": {
       "name": "new.docusaurus.io",
-      "version": "4.0.0",
+      "version": "4.0.1",
     },
     "admin/scripts": {
       "name": "@docusaurus/monorepo-scripts",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "bin": {
         "copy-untyped-files": "copyUntypedFiles.js",
         "format-gitignored-files": "formatGitignoredFiles.js",
@@ -89,7 +89,7 @@
     },
     "admin/test-bad-package": {
       "name": "test-bad-package",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "@mdx-js/react": "1.0.1",
         "react": "16.14.0",
@@ -98,7 +98,7 @@
     },
     "argos": {
       "name": "argos",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "@argos-ci/cli": "^6.9.2",
         "@argos-ci/playwright": "^7.5.0",
@@ -109,7 +109,7 @@
     },
     "packages/create-docusaurus": {
       "name": "create-docusaurus",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "bin": "bin/index.js",
       "dependencies": {
         "@docusaurus/fs": "workspace:*",
@@ -126,7 +126,7 @@
     },
     "packages/create-docusaurus/templates/classic": {
       "name": "docusaurus-2-classic-template",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "@docusaurus/core": "4.0.0",
         "@docusaurus/preset-classic": "4.0.0",
@@ -143,7 +143,7 @@
     },
     "packages/create-docusaurus/templates/classic-typescript": {
       "name": "docusaurus-2-classic-typescript-template",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "@docusaurus/core": "4.0.0",
         "@docusaurus/preset-classic": "4.0.0",
@@ -164,7 +164,7 @@
     },
     "packages/docusaurus": {
       "name": "@docusaurus/core",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "bin": {
         "docusaurus": "bin/docusaurus.mjs",
       },
@@ -225,7 +225,7 @@
     },
     "packages/docusaurus-babel": {
       "name": "@docusaurus/babel",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "@babel/core": "^7.29.7",
         "@babel/generator": "^7.29.8",
@@ -250,7 +250,7 @@
     },
     "packages/docusaurus-bundler": {
       "name": "@docusaurus/bundler",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "@docusaurus/fs": "workspace:*",
         "@docusaurus/logger": "workspace:*",
@@ -267,7 +267,7 @@
     },
     "packages/docusaurus-fs": {
       "name": "@docusaurus/fs",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "@docusaurus/logger": "workspace:*",
         "p-queue": "^9.3.3",
@@ -276,7 +276,7 @@
     },
     "packages/docusaurus-glob": {
       "name": "@docusaurus/glob",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "chokidar": "^3.6.0",
         "micromatch": "^4.0.8",
@@ -289,7 +289,7 @@
     },
     "packages/docusaurus-logger": {
       "name": "@docusaurus/logger",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "@docusaurus/types": "workspace:*",
         "tslib": "^2.8.1",
@@ -297,7 +297,7 @@
     },
     "packages/docusaurus-mdx-loader": {
       "name": "@docusaurus/mdx-loader",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "@docusaurus/fs": "workspace:*",
         "@docusaurus/logger": "workspace:*",
@@ -345,7 +345,7 @@
     },
     "packages/docusaurus-module-type-aliases": {
       "name": "@docusaurus/module-type-aliases",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "@docusaurus/types": "workspace:*",
         "@types/history": "^4.7.11",
@@ -363,7 +363,7 @@
     },
     "packages/docusaurus-plugin-client-redirects": {
       "name": "@docusaurus/plugin-client-redirects",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "@docusaurus/core": "workspace:*",
         "@docusaurus/fs": "workspace:*",
@@ -385,7 +385,7 @@
     },
     "packages/docusaurus-plugin-content-blog": {
       "name": "@docusaurus/plugin-content-blog",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "@docusaurus/core": "workspace:*",
         "@docusaurus/fs": "workspace:*",
@@ -425,7 +425,7 @@
     },
     "packages/docusaurus-plugin-content-docs": {
       "name": "@docusaurus/plugin-content-docs",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "@docusaurus/core": "workspace:*",
         "@docusaurus/fs": "workspace:*",
@@ -462,7 +462,7 @@
     },
     "packages/docusaurus-plugin-content-pages": {
       "name": "@docusaurus/plugin-content-pages",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "@docusaurus/core": "workspace:*",
         "@docusaurus/fs": "workspace:*",
@@ -483,7 +483,7 @@
     },
     "packages/docusaurus-plugin-css-cascade-layers": {
       "name": "@docusaurus/plugin-css-cascade-layers",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "@docusaurus/core": "workspace:*",
         "@docusaurus/types": "workspace:*",
@@ -498,7 +498,7 @@
     },
     "packages/docusaurus-plugin-debug": {
       "name": "@docusaurus/plugin-debug",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "@docusaurus/core": "workspace:*",
         "@docusaurus/module-type-aliases": "workspace:*",
@@ -514,7 +514,7 @@
     },
     "packages/docusaurus-plugin-google-gtag": {
       "name": "@docusaurus/plugin-google-gtag",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "@docusaurus/core": "workspace:*",
         "@docusaurus/types": "workspace:*",
@@ -531,7 +531,7 @@
     },
     "packages/docusaurus-plugin-google-tag-manager": {
       "name": "@docusaurus/plugin-google-tag-manager",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "@docusaurus/core": "workspace:*",
         "@docusaurus/types": "workspace:*",
@@ -548,7 +548,7 @@
     },
     "packages/docusaurus-plugin-ideal-image": {
       "name": "@docusaurus/plugin-ideal-image",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "@docusaurus/core": "workspace:*",
         "@docusaurus/lqip-loader": "workspace:*",
@@ -575,7 +575,7 @@
     },
     "packages/docusaurus-plugin-pwa": {
       "name": "@docusaurus/plugin-pwa",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "@docusaurus/bundler": "workspace:*",
         "@docusaurus/core": "workspace:*",
@@ -602,7 +602,7 @@
     },
     "packages/docusaurus-plugin-sitemap": {
       "name": "@docusaurus/plugin-sitemap",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "@docusaurus/core": "workspace:*",
         "@docusaurus/fs": "workspace:*",
@@ -626,7 +626,7 @@
     },
     "packages/docusaurus-plugin-svgr": {
       "name": "@docusaurus/plugin-svgr",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "@docusaurus/core": "workspace:*",
         "@docusaurus/types": "workspace:*",
@@ -649,7 +649,7 @@
     },
     "packages/docusaurus-plugin-vercel-analytics": {
       "name": "@docusaurus/plugin-vercel-analytics",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "@docusaurus/core": "workspace:*",
         "@docusaurus/logger": "workspace:*",
@@ -667,7 +667,7 @@
     },
     "packages/docusaurus-preset-classic": {
       "name": "@docusaurus/preset-classic",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "@docusaurus/core": "workspace:*",
         "@docusaurus/plugin-content-blog": "workspace:*",
@@ -691,7 +691,7 @@
     },
     "packages/docusaurus-remark-plugin-npm2yarn": {
       "name": "@docusaurus/remark-plugin-npm2yarn",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "mdast-util-mdx": "^3.0.0",
         "npm-to-yarn": "^3.2.0",
@@ -710,7 +710,7 @@
     },
     "packages/docusaurus-theme-classic": {
       "name": "@docusaurus/theme-classic",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "@docusaurus/core": "workspace:*",
         "@docusaurus/mdx-loader": "workspace:*",
@@ -751,7 +751,7 @@
     },
     "packages/docusaurus-theme-common": {
       "name": "@docusaurus/theme-common",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "@docusaurus/mdx-loader": "workspace:*",
         "@docusaurus/module-type-aliases": "workspace:*",
@@ -781,7 +781,7 @@
     },
     "packages/docusaurus-theme-live-codeblock": {
       "name": "@docusaurus/theme-live-codeblock",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "@docusaurus/core": "workspace:*",
         "@docusaurus/theme-classic": "workspace:*",
@@ -803,7 +803,7 @@
     },
     "packages/docusaurus-theme-mermaid": {
       "name": "@docusaurus/theme-mermaid",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "@docusaurus/core": "workspace:*",
         "@docusaurus/module-type-aliases": "workspace:*",
@@ -820,7 +820,7 @@
     },
     "packages/docusaurus-theme-search-algolia": {
       "name": "@docusaurus/theme-search-algolia",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "@algolia/autocomplete-core": "^1.19.10",
         "@docsearch/react": "^4.7.0",
@@ -852,7 +852,7 @@
     },
     "packages/docusaurus-theme-translations": {
       "name": "@docusaurus/theme-translations",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "@docusaurus/fs": "workspace:*",
         "tslib": "^2.8.1",
@@ -867,14 +867,14 @@
     },
     "packages/docusaurus-tsconfig": {
       "name": "@docusaurus/tsconfig",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "peerDependencies": {
         "typescript": ">=6.0",
       },
     },
     "packages/docusaurus-types": {
       "name": "@docusaurus/types",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "@mdx-js/mdx": "^3.1.1",
         "@types/history": "^4.7.11",
@@ -900,7 +900,7 @@
     },
     "packages/docusaurus-utils": {
       "name": "@docusaurus/utils",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "@11ty/gray-matter": "^3.0.0",
         "@docusaurus/fs": "workspace:*",
@@ -923,7 +923,7 @@
     },
     "packages/docusaurus-utils-common": {
       "name": "@docusaurus/utils-common",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "@docusaurus/types": "workspace:*",
         "tslib": "^2.8.1",
@@ -931,7 +931,7 @@
     },
     "packages/docusaurus-utils-validation": {
       "name": "@docusaurus/utils-validation",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "@docusaurus/fs": "workspace:*",
         "@docusaurus/logger": "workspace:*",
@@ -945,7 +945,7 @@
     },
     "packages/eslint-plugin": {
       "name": "@docusaurus/eslint-plugin",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "@typescript-eslint/types": "^8.71.0",
         "@typescript-eslint/utils": "^8.71.0",
@@ -960,7 +960,7 @@
     },
     "packages/lqip-loader": {
       "name": "@docusaurus/lqip-loader",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "@docusaurus/logger": "workspace:*",
         "sharp": "^0.35.1",
@@ -972,7 +972,7 @@
     },
     "packages/stylelint-copyright": {
       "name": "stylelint-copyright",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "stylelint": "^17.15.0",
         "tslib": "^2.8.1",
@@ -980,7 +980,7 @@
     },
     "website": {
       "name": "website",
-      "version": "4.0.0",
+      "version": "4.0.1",
       "dependencies": {
         "@crowdin/crowdin-api-client": "^1.57.0",
         "@docsearch/react": "^4.7.0",

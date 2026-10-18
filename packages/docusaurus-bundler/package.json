@@ -1,6 +1,6 @@
 {
   "name": "@docusaurus/bundler",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "Docusaurus bundler package, based on Bun.build().",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",

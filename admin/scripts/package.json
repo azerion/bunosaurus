@@ -1,6 +1,6 @@
 {
   "name": "@docusaurus/monorepo-scripts",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "Scripts used in various places of Docusaurus maintenance",
   "private": true,
   "license": "MIT",

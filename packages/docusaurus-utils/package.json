@@ -1,6 +1,6 @@
 {
   "name": "@docusaurus/utils",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "Node utility functions for Docusaurus packages.",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",

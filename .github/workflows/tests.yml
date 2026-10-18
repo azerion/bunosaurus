@@ -65,6 +65,5 @@ jobs:
         # For latest TS there are often lib check errors, so we disable it
         # Details: https://github.com/facebook/docusaurus/pull/10486
         run: |
-          bun add -d --exact typescript@latest --ignore-scripts
-          bun node_modules/typescript/bin/tsc --version
-          bun node_modules/typescript/bin/tsc --project website/tsconfig.skipLibCheck.json
+          bunx --package typescript@latest tsc --version
+          bunx --package typescript@latest tsc --project website/tsconfig.skipLibCheck.json
